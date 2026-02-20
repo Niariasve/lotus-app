@@ -76,7 +76,7 @@ return new class extends Migration
             );
 
             $table->index(
-                ['platform_id', 'contact_username'],
+                ['platform_id', 'contact_identifier'],
                 'platform_username_index',
             );
         });
