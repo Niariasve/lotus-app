@@ -16,6 +16,7 @@
         FieldSet,
     } from '@/components/ui/field'
     import { Input } from '@/components/ui/input';
+    import { Spinner } from '@/components/ui/spinner';
     import AppLayout from '@/layouts/AppLayout.vue';
     import customers from '@/routes/customers';
     import { type BreadcrumbItem } from '@/types';
@@ -99,7 +100,10 @@
                                     />
                                 </Field>
                                 <Field orientation="horizontal">
-                                    <Button type="submit">{{ $t('actions.submit') }}</Button>
+                                    <Button type="submit" :disabled="processing">
+                                        <Spinner v-if="processing" class="animate-spin" />
+                                        {{ $t('actions.submit') }}
+                                    </Button>
                                 </Field>
                             </FieldGroup>
                         </FieldSet>
