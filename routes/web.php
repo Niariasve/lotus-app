@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -14,4 +15,11 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-require __DIR__.'/settings.php';
+Route::prefix('customers')
+    ->name('customers.')
+    ->group(function () {
+        Route::get('/', [CustomerController::class, 'index'])
+            ->name('index');
+    });
+
+require __DIR__ . '/settings.php';
