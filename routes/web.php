@@ -20,6 +20,9 @@ Route::prefix('customers')
     ->group(function () {
         Route::get('/', [CustomerController::class, 'index'])
             ->name('index');
+
+        Route::get('/create', [CustomerController::class, 'create'])
+            ->name('create');
     });
 
 require __DIR__ . '/settings.php';

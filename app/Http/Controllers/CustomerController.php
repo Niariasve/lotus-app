@@ -7,7 +7,13 @@ use Inertia\Inertia;
 
 class CustomerController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         return Inertia::render('customers/Index');
+    }
+
+    public function create()
+    {
+        return Inertia::render('customers/Create');
     }
 }
