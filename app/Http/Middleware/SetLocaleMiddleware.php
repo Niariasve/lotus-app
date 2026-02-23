@@ -17,11 +17,21 @@ class SetLocaleMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->locale) {
-            App::setLocale(Auth::user()->locale);
+        $supported = ['en', 'es'];
+
+        $locale = null;
+
+        if (Auth::check() && in_array((string) Auth::user()->locale, $supported, true)) {
+            $locale = Auth::user()->locale; // logged-in preference from DB
+        } elseif (in_array((string) session('locale'), $supported, true)) {
+            $locale = session('locale'); // guest/manual switch remembered in session
+        } elseif (in_array((string) $request->cookie('locale'), $supported, true)) {
+            $locale = $request->cookie('locale'); // remembered between visits
         } else {
-            App::setLocale('app.locale');
+            $locale = $request->getPreferredLanguage($supported) ?? config('app.locale'); // browser language
         }
+
+        App::setLocale($locale);
 
         return $next($request);
     }
