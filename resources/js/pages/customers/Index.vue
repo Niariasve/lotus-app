@@ -26,7 +26,7 @@
             <div class="flex items-center justify-end">
                 <Button @click="router.visit(customers.create().url)" class="cursor-pointer">
                     <Plus />
-                    Create Customer
+                    {{ $t('actions.create') }}
                 </Button>
             </div>
 

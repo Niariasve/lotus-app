@@ -23,6 +23,9 @@ Route::prefix('customers')
 
         Route::get('/create', [CustomerController::class, 'create'])
             ->name('create');
+
+        Route::post('/store', [CustomerController::class, 'store'])
+            ->name('store');
     });
 
 require __DIR__ . '/settings.php';
