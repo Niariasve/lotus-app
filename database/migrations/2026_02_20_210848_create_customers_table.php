@@ -45,6 +45,8 @@ return new class extends Migration
             $table->id();
 
             $table->string('name', 50)->unique();
+            $table->string('slug', 50)->unique();
+            $table->boolean('is_active')->default(true);
             
             $table->timestamps();
         });
@@ -79,6 +81,8 @@ return new class extends Migration
                 ['platform_id', 'contact_identifier'],
                 'platform_username_index',
             );
+
+            $table->index('customer_id');
         });
     }
 
