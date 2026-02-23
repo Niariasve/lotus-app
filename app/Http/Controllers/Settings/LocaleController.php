@@ -6,23 +6,25 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 
 class LocaleController extends Controller
 {
     public function update(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'locale' => 'required|in:en,es',
         ]);
 
-        $locale = $request->locale;
+        $locale = $validated['locale'];
+        $user = $request->user();
+
+        if ($user === null) {
+            return back();
+        }
 
         session(['locale' => $locale]);
 
-        if (Auth::check()) {
-            $request->user()->update(['locale' => $locale]);
-        }
+        $user->fill(['locale' => $locale])->save();
 
         App::setLocale($locale);
 
