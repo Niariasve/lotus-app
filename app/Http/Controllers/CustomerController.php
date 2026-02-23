@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Customers\StoreRequest;
+use App\Models\ContactPlatform;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,11 +17,17 @@ class CustomerController extends Controller
 
     public function create()
     {
-        return Inertia::render('customers/Create');
+        $contactPlatforms = ContactPlatform::where('is_active', true)
+            ->get(['id', 'name', 'slug']);
+        
+        return Inertia::render('customers/Create', [
+            'contactPlatforms' => $contactPlatforms,
+        ]);
     }
 
     public function store(StoreRequest $request)
     {
+        // dd($request->all());
         $validated = $request->validated();
 
         Customer::create($validated);

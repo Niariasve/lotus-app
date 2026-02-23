@@ -25,7 +25,21 @@ class StoreRequest extends FormRequest
             'full_name' => 'required|string|max:150',
             'email' => 'nullable|email|unique:customers,email',
             'phone' => 'nullable|string|max:30',
-            'city' => 'nullable|string|max:100'
+            'city' => 'nullable|string|max:100',
+
+            'platform' => 'nullable|array',
+            'platform.*' => 'nullable|string|max:100'
         ];
+    }
+
+    public function attributes(): array
+    {
+        $attributes = [];
+        
+        foreach($this->input('platform', []) as $slug => $value) {
+            $attributes["platform.$slug"] = $slug;
+        }
+
+        return $attributes;
     }
 }

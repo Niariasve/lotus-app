@@ -284,5 +284,6 @@ return [
         'winner'                   => 'ganador',
         'work'                     => 'trabajo',
         'year'                     => 'año',
+        'full_name'                => 'nombre completo',
     ],
 ];
