@@ -19,13 +19,16 @@ Route::prefix('customers')
     ->name('customers.')
     ->group(function () {
         Route::get('/', [CustomerController::class, 'index'])
-            ->name('index');
+            ->name('index')
+            ->middleware(['auth']);
 
         Route::get('/create', [CustomerController::class, 'create'])
-            ->name('create');
+            ->name('create')
+            ->middleware(['auth']);
 
         Route::post('/store', [CustomerController::class, 'store'])
-            ->name('store');
+            ->name('store')
+            ->middleware(['auth']);
     });
 
 require __DIR__ . '/settings.php';
