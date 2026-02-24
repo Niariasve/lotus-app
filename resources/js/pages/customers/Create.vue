@@ -16,6 +16,11 @@
         FieldSet,
     } from '@/components/ui/field'
     import { Input } from '@/components/ui/input';
+    import {
+        RadioGroup,
+        RadioGroupItem,
+    } from '@/components/ui/radio-group'
+    import { ScrollArea } from '@/components/ui/scroll-area'
     import { Spinner } from '@/components/ui/spinner';
     import AppLayout from '@/layouts/AppLayout.vue';
     import customers from '@/routes/customers';
@@ -105,7 +110,7 @@
                             </FieldSet>
                         </FieldGroup>
                     </div>
-                    <div class="flex-1 p-4 space-y-3 border rounded-xl">
+                    <ScrollArea class="flex-1 p-4 h-150 space-y-3 border rounded-xl">
                         <FieldGroup>
                             <FieldSet>
                                 <FieldLegend>Contact Platforms</FieldLegend>
@@ -115,17 +120,30 @@
                                 <FieldGroup>
                                     <Field v-for="(platform) in contactPlatforms" :key="platform.id">
                                         <FieldLabel :for="platform.slug">{{ platform.name }}</FieldLabel>
-                                        <Input 
-                                            :id="platform.slug"
-                                            :name="`platform[${platform.slug}]`"
-                                            :placeholder="platform.name"
-                                        />
+                                        <Input :id="platform.slug" :name="`platform[${platform.slug}]`"
+                                            :placeholder="platform.name" />
                                         <InputError :message="errors[`platform.${platform.slug}`]" />
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>
+                            <FieldSeparator />
+                            <FieldSet>
+                                <FieldLegend>Primary Platform</FieldLegend>
+                                <FieldDescription>
+                                    Primary comunication platform
+                                </FieldDescription>
+                                <InputError :message="errors.primary_platform" />
+                                <RadioGroup name="primary_platform">
+                                    <Field v-for="(platform) in contactPlatforms" :key="platform.id">
+                                        <div class="flex items-center space-x-2">
+                                            <RadioGroupItem :id="`${platform.id}`" :value="platform.slug" />
+                                            <Label :for="`${platform.id}`">{{ platform.name }}</Label>
+                                        </div>
+                                    </Field>
+                                </RadioGroup>
+                            </FieldSet>
                         </FieldGroup>
-                    </div>
+                    </ScrollArea>
                 </div>
             </Form>
         </div>

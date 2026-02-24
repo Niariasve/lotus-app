@@ -30,7 +30,8 @@ class CustomerController extends Controller
         // dd($request->all());
         $validated = $request->validated();
 
-        Customer::create($validated);
+        dd($validated);
+        // Customer::create($validated);
 
         return redirect()->route('customers.index');
     }

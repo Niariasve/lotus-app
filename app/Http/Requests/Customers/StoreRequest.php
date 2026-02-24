@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Customers;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreRequest extends FormRequest
 {
@@ -28,7 +29,8 @@ class StoreRequest extends FormRequest
             'city' => 'nullable|string|max:100',
 
             'platform' => 'nullable|array',
-            'platform.*' => 'nullable|string|max:100'
+            'platform.*' => 'nullable|string|max:100',
+            'primary_platform' => 'nullable|string'
         ];
     }
 
@@ -41,5 +43,33 @@ class StoreRequest extends FormRequest
         }
 
         return $attributes;
+    }
+
+    public function after(): array 
+    {
+        return [
+            function (Validator $validator) 
+            {
+                $platforms = collect($this->input('platform', []))
+                    ->filter(fn ($value) => filled($value));
+
+                if ($platforms->isNotEmpty()) {
+                    if (!$this->filled('primary_platform')) {
+                        $validator->errors()->add(
+                            'primary_platform',
+                            'You must choose a primary communication platform'
+                        );
+                        return;
+                    }
+
+                    if (!$platforms->has($this->input('primary_platform'))) {
+                        $validator->errors()->add(
+                            'primary_platform',
+                            'Primary platform must have a valid platform'
+                        );
+                    }
+                }
+            }
+        ];
     }
 }
