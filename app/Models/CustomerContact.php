@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerContact extends Model
 {
@@ -12,4 +13,14 @@ class CustomerContact extends Model
         'contact_identifier',
         'is_primary',
     ];
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function contactPlatform(): BelongsTo
+    {
+        return $this->belongsTo(ContactPlatform::class);
+    }
 }

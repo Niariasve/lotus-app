@@ -27,11 +27,29 @@ class CustomerController extends Controller
 
     public function store(StoreRequest $request)
     {
-        // dd($request->all());
         $validated = $request->validated();
 
-        dd($validated);
-        // Customer::create($validated);
+        $platforms = $validated['platform'];
+        $primary = $validated['primary_platform'];
+
+        unset($validated['platform'], $validated['primary_platform']);
+
+        $customer = Customer::create($validated);
+
+        foreach ($platforms as $slug => $identifier) {
+            if (!filled($identifier)) continue;
+            
+            $platform = ContactPlatform::where('slug', $slug)->first();
+
+            if (!$platform) continue;
+
+            $customer->contactPlatforms()->create([
+                'customer_id' => $customer->id,
+                'platform_id' => $platform->id,
+                'contact_identifier' => $identifier,
+                'is_primary' => $primary === $slug,
+            ]);
+        }
 
         return redirect()->route('customers.index');
     }
