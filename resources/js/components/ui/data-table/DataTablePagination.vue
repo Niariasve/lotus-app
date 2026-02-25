@@ -33,7 +33,7 @@
           :model-value="`${table.getState().pagination.pageSize}`" 
           @update:model-value="(value) => table.setPageSize(Number(value))"
         >
-          <SelectTrigger class="h-8 w-[70px]">
+          <SelectTrigger class="h-8 w-17.5">
             <SelectValue :placeholder="`${table.getState().pagination.pageSize}`" />
           </SelectTrigger>
           <SelectContent side="top">
@@ -43,7 +43,7 @@
           </SelectContent>
         </Select>
       </div>
-      <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+      <div class="flex w-25 items-center justify-center text-sm font-medium">
         Page {{ table.getState().pagination.pageIndex + 1 }} of
         {{ table.getPageCount() }}
       </div>

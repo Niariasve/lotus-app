@@ -81,7 +81,7 @@
 
 <template>
   <div class="flex flex-col md:flex-row justify-between items-center py-4 gap-4">
-    <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-[35rem]">
+    <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-140">
 
       <Input placeholder="Search" :model-value="table.getColumn(filterBy)?.getFilterValue() as string"
         @update:model-value="table.getColumn(filterBy)?.setFilterValue($event)" />
