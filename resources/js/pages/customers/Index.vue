@@ -3,16 +3,22 @@
     import { Plus } from 'lucide-vue-next';
     import Heading from '@/components/Heading.vue';
     import { Button } from '@/components/ui/button';
+    import DataTable from '@/components/ui/data-table/DataTable.vue';
     import AppLayout from '@/layouts/AppLayout.vue';
-    import customers from '@/routes/customers';
-    import { type BreadcrumbItem } from '@/types';
+    import customersRoutes from '@/routes/customers';
+    import { type Customer, type BreadcrumbItem } from '@/types';
+    import { columns } from '@/types/customers/columns';
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Customers',
-            href: customers.index().url,
+            href: customersRoutes.index().url,
         },
     ];
+
+    defineProps<{
+        customers: Customer[],
+    }>();
 
 </script>
 
@@ -24,34 +30,15 @@
         <div class="flex h-full flex-1 flex-col gap-3 overflow-x-auto rounded-xl p-3">
             <Heading title="Customers" description="Manage customers" class="mb-0" />
             <div class="flex items-center justify-end">
-                <Button @click="router.visit(customers.create().url)" class="cursor-pointer">
+                <Button @click="router.visit(customersRoutes.create().url)" class="cursor-pointer">
                     <Plus />
                     {{ $t('actions.create') }}
                 </Button>
             </div>
 
-            <section class="rounded-xl border border-sidebar-border/70 bg-background p-3 dark:border-sidebar-border">
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-180 text-sm">
-                        <thead>
-                            <tr class="border-b border-sidebar-border/70 text-left">
-                                <th class="py-2 pr-3 font-medium">Name</th>
-                                <th class="py-2 pr-3 font-medium">Email</th>
-                                <th class="py-2 pr-3 font-medium">Phone</th>
-                                <th class="py-2 pr-3 font-medium">Status</th>
-                                <th class="py-2 pr-0 text-right font-medium">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="5" class="py-10 text-center text-muted-foreground">
-                                    Table content will be added here.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+            <DataTable :columns="columns" :data="customers" :filterable-columns="[
+                { value: 'full_name', label: 'Full Name' }
+            ]" />
         </div>
     </AppLayout>
 </template>
