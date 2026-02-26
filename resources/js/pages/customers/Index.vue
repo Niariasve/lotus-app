@@ -4,10 +4,10 @@
     import Heading from '@/components/Heading.vue';
     import { Button } from '@/components/ui/button';
     import DataTable from '@/components/ui/data-table/DataTable.vue';
+    import { columns } from '@/features/customers/types/columns';
     import AppLayout from '@/layouts/AppLayout.vue';
     import customersRoutes from '@/routes/customers';
     import { type Customer, type BreadcrumbItem } from '@/types';
-    import { columns } from '@/types/customers/columns';
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
