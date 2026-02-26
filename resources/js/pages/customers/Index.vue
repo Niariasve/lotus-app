@@ -36,7 +36,8 @@
             </div>
 
             <DataTable :columns="columns" :data="customers" :filterable-columns="[
-                { value: 'full_name', label: 'Full Name' }
+                { value: 'full_name', label: 'Full Name' },
+                { value: 'primary_contact_platform', label: 'Contact Platform' }
             ]" />
         </div>
     </AppLayout>
