@@ -19,7 +19,6 @@
     defineProps<{
         customers: Customer[],
     }>();
-
 </script>
 
 <template>

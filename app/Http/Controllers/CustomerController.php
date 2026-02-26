@@ -12,8 +12,10 @@ class CustomerController extends Controller
 {
     public function index()
     {
+        $customers = Customer::with('primaryContactPlatform.contactPlatform')->get();
+
         return Inertia::render('customers/Index', [
-            'customers' => Customer::all(),
+            'customers' => $customers,
         ]);
     }
 
@@ -21,7 +23,7 @@ class CustomerController extends Controller
     {
         $contactPlatforms = ContactPlatform::where('is_active', true)
             ->get(['id', 'name', 'slug']);
-        
+
         return Inertia::render('customers/Create', [
             'contactPlatforms' => $contactPlatforms,
         ]);
@@ -40,7 +42,7 @@ class CustomerController extends Controller
 
         foreach ($platforms as $slug => $identifier) {
             if (!filled($identifier)) continue;
-            
+
             $platform = ContactPlatform::where('slug', $slug)->first();
 
             if (!$platform) continue;

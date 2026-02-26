@@ -16,11 +16,11 @@ class CustomerContact extends Model
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     public function contactPlatform(): BelongsTo
     {
-        return $this->belongsTo(ContactPlatform::class);
+        return $this->belongsTo(ContactPlatform::class, 'platform_id');
     }
 }
