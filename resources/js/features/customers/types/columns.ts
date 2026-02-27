@@ -1,6 +1,7 @@
 import { type ColumnDef } from "@tanstack/vue-table";
 import { h } from "vue";
 import DataTableColumnHeader from "@/components/ui/data-table/DataTableColumnHeader.vue";
+import TableDropdown from "../components/CustomerDataTableDropdown.vue";
 import { type Customer } from "./customers";
 
 export const columns: ColumnDef<Customer>[] = [
@@ -62,4 +63,13 @@ export const columns: ColumnDef<Customer>[] = [
         accessorKey: 'phone',
         header: 'Phone'
     },
+    {
+        id: 'accions',
+        header: () => h('div', { class: 'text-center' }, 'Actions'),
+        enableHiding: false,
+        cell: ({ row }) => {
+            const customer = row.original;
+            return h('div', { class: 'relative flex justify-center' }, h(TableDropdown, { customer }))
+        }
+    }
 ]

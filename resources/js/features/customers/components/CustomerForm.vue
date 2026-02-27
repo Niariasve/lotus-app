@@ -21,7 +21,7 @@
     import { Spinner } from '@/components/ui/spinner';
     import customers from '@/routes/customers';
     import { type Customer, type ContactPlatform } from '@/types';
-    
+
 
     defineProps<{
         customer?: Customer,

@@ -15,20 +15,8 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::prefix('customers')
-    ->name('customers.')
-    ->group(function () {
-        Route::get('/', [CustomerController::class, 'index'])
-            ->name('index')
-            ->middleware(['auth']);
-
-        Route::get('/create', [CustomerController::class, 'create'])
-            ->name('create')
-            ->middleware(['auth']);
-
-        Route::post('/store', [CustomerController::class, 'store'])
-            ->name('store')
-            ->middleware(['auth']);
-    });
+Route::middleware(['auth'])->group(function () {
+    Route::resource('customers', CustomerController::class);
+});
 
 require __DIR__ . '/settings.php';
