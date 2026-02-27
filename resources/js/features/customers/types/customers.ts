@@ -10,6 +10,7 @@ export interface Customer {
 export interface ContactPlatform {
     id: number,
     name: string,
+    slug: string,
 }
 
 export interface CustomerContact {
