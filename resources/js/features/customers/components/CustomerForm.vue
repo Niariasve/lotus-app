@@ -59,13 +59,13 @@
                                 <Field>
                                     <FieldLabel for="full_name">Full name *</FieldLabel>
                                     <Input id="full_name" name="full_name" placeholder="Hayden Christensen"
-                                        :default-value="customer?.full_name" />
+                                        :default-value="customer?.full_name" :disabled="processing" />
                                     <InputError :message="errors.full_name" />
                                 </Field>
                                 <Field>
                                     <FieldLabel for="city">City</FieldLabel>
                                     <Input id="city" name="city" placeholder="Guayaquil"
-                                        :default-value="customer?.city" />
+                                        :default-value="customer?.city" :disabled="processing" />
                                     <InputError :message="errors.city" />
                                 </Field>
                             </FieldGroup>
@@ -80,13 +80,13 @@
                                 <Field>
                                     <FieldLabel for="email">Email</FieldLabel>
                                     <Input id="email" name="email" placeholder="user@example.com"
-                                        :default-value="customer?.email" />
+                                        :default-value="customer?.email" :disabled="processing" />
                                     <InputError :message="errors.email" />
                                 </Field>
                                 <Field>
                                     <FieldLabel for="phone">Phone</FieldLabel>
                                     <Input id="phone" name="phone" placeholder="099999999"
-                                        :default-value="customer?.phone" />
+                                        :default-value="customer?.phone" :disabled="processing" />
                                     <InputError :message="errors.phone" />
                                 </Field>
                             </FieldGroup>
@@ -105,7 +105,8 @@
                                     <FieldLabel :for="platform.slug">{{ platform.name }}</FieldLabel>
                                     <Input :id="platform.slug" :name="`platform[${platform.slug}]`"
                                         :placeholder="platform.name"
-                                        :default-value="getPlatformById(platform.id)?.contact_identifier" />
+                                        :default-value="getPlatformById(platform.id)?.contact_identifier"
+                                        :disabled="processing" />
                                     <InputError :message="errors[`platform.${platform.slug}`]" />
                                 </Field>
                             </FieldGroup>
@@ -120,7 +121,8 @@
                             <RadioGroup name="primary_platform" :default-value="primary?.slug">
                                 <Field v-for="(platform) in contactPlatforms" :key="platform.id">
                                     <div class="flex items-center space-x-2">
-                                        <RadioGroupItem :id="`${platform.id}`" :value="platform.slug" />
+                                        <RadioGroupItem :id="`${platform.id}`" :value="platform.slug"
+                                            :disabled="processing" />
                                         <FieldLabel :for="`${platform.id}`" class="text-sm">
                                             {{ platform.name }}
                                         </FieldLabel>
