@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\ContactPlatform;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ContactPlatformsSeeder extends Seeder
@@ -13,11 +12,15 @@ class ContactPlatformsSeeder extends Seeder
      */
     public function run(): void
     {
-        ContactPlatform::insert([
-            ['name' => 'Instagram', 'slug' => 'instagram'],
-            ['name' => 'WhatsApp', 'slug' => 'whatsapp'],
-            ['name' => 'Facebook', 'slug' => 'facebook'],
-            ['name' => 'Telegram', 'slug' => 'telegram'],
-        ]);
+        ContactPlatform::query()->upsert(
+            [
+                ['name' => 'Instagram', 'slug' => 'instagram', 'is_active' => true],
+                ['name' => 'WhatsApp', 'slug' => 'whatsapp', 'is_active' => true],
+                ['name' => 'Facebook', 'slug' => 'facebook', 'is_active' => true],
+                ['name' => 'Telegram', 'slug' => 'telegram', 'is_active' => true],
+            ],
+            ['slug'],
+            ['name', 'is_active']
+        );
     }
 }
