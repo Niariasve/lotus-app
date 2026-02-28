@@ -58,10 +58,18 @@ export const columns: ColumnDef<Customer>[] = [
     {
         accessorKey: 'city',
         header: 'City',
+        cell: ({ row }) => {
+            if (row.original.city) return row.original.city
+            else return h("span", { class: 'font-bold ' }, "N/A")
+        }
     },
     {
         accessorKey: 'phone',
-        header: 'Phone'
+        header: 'Phone',
+        cell: ({ row }) => {
+            if (row.original.phone) return row.original.phone
+            else return h("span", { class: 'font-bold ' }, "N/A")
+        }
     },
     {
         id: 'accions',
