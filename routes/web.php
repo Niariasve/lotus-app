@@ -16,7 +16,8 @@ Route::get('dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
-    Route::resource('customers', CustomerController::class);
+    Route::resource('customers', CustomerController::class)
+        ->except(['show']);
 });
 
 require __DIR__ . '/settings.php';

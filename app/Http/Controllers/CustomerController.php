@@ -79,6 +79,13 @@ class CustomerController extends Controller
         return redirect()->route('customers.index');
     }
 
+    public function destroy(Customer $customer)
+    {
+        $customer->delete();
+
+        return redirect()->route('customers.index');
+    }
+
     private function syncCustomerContacts(Customer $customer, array $platforms, ?string $primary): void
     {
         foreach ($platforms as $slug => $identifier) {
