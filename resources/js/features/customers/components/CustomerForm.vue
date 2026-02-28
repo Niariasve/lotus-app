@@ -20,17 +20,32 @@
     import { ScrollArea } from '@/components/ui/scroll-area'
     import { Spinner } from '@/components/ui/spinner';
     import customers from '@/routes/customers';
-    import { type Customer, type ContactPlatform } from '@/types';
+    import { type Customer, type ContactPlatform, type CustomerContact } from '@/types';
 
-
-    defineProps<{
+    const props = defineProps<{
         customer?: Customer,
-        contactPlatforms: Array<ContactPlatform>
+        contactPlatforms: Array<ContactPlatform>,
+        customerContacts?: Array<CustomerContact>,
+        primary?: ContactPlatform
     }>();
+
+    const controller = () => {
+        if (!props.customer) return CustomerController.store.form()
+        else return CustomerController.update.form(props.customer!.id)
+    }
+
+    const getPlatformById = (platformId: number) => {
+        const platform = props.customerContacts?.find(
+            (customerContact) => customerContact.platform_id === platformId
+        );
+
+        return platform;
+    }
+
 </script>
 
 <template>
-    <Form v-bind="CustomerController.store.form()" v-slot="{ processing, errors }">
+    <Form v-bind="controller()" v-slot="{ processing, errors }">
         <div class="flex flex-col gap-4 md:max-w-4xl mx-auto">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-3 p-4 space-y-3 border rounded-xl">
@@ -43,12 +58,14 @@
                             <FieldGroup>
                                 <Field>
                                     <FieldLabel for="full_name">Full name *</FieldLabel>
-                                    <Input id="full_name" name="full_name" placeholder="Hayden Christensen" />
+                                    <Input id="full_name" name="full_name" placeholder="Hayden Christensen"
+                                        :default-value="customer?.full_name" />
                                     <InputError :message="errors.full_name" />
                                 </Field>
                                 <Field>
                                     <FieldLabel for="city">City</FieldLabel>
-                                    <Input id="city" name="city" placeholder="Guayaquil" />
+                                    <Input id="city" name="city" placeholder="Guayaquil"
+                                        :default-value="customer?.city" />
                                     <InputError :message="errors.city" />
                                 </Field>
                             </FieldGroup>
@@ -62,12 +79,14 @@
                             <FieldGroup>
                                 <Field>
                                     <FieldLabel for="email">Email</FieldLabel>
-                                    <Input id="email" name="email" placeholder="user@example.com" />
+                                    <Input id="email" name="email" placeholder="user@example.com"
+                                        :default-value="customer?.email" />
                                     <InputError :message="errors.email" />
                                 </Field>
                                 <Field>
                                     <FieldLabel for="phone">Phone</FieldLabel>
-                                    <Input id="phone" name="phone" placeholder="099999999" />
+                                    <Input id="phone" name="phone" placeholder="099999999"
+                                        :default-value="customer?.phone" />
                                     <InputError :message="errors.phone" />
                                 </Field>
                             </FieldGroup>
@@ -85,7 +104,8 @@
                                 <Field v-for="(platform) in contactPlatforms" :key="platform.id">
                                     <FieldLabel :for="platform.slug">{{ platform.name }}</FieldLabel>
                                     <Input :id="platform.slug" :name="`platform[${platform.slug}]`"
-                                        :placeholder="platform.name" />
+                                        :placeholder="platform.name"
+                                        :default-value="getPlatformById(platform.id)?.contact_identifier" />
                                     <InputError :message="errors[`platform.${platform.slug}`]" />
                                 </Field>
                             </FieldGroup>
@@ -97,7 +117,7 @@
                                 Primary comunication platform
                             </FieldDescription>
                             <InputError :message="errors.primary_platform" />
-                            <RadioGroup name="primary_platform">
+                            <RadioGroup name="primary_platform" :default-value="primary?.slug">
                                 <Field v-for="(platform) in contactPlatforms" :key="platform.id">
                                     <div class="flex items-center space-x-2">
                                         <RadioGroupItem :id="`${platform.id}`" :value="platform.slug" />
@@ -115,7 +135,8 @@
             <div class="flex gap-2">
                 <Button type="submit" :disabled="processing" class="cursor-pointer">
                     <Spinner v-if="processing" class="animate-spin" />
-                    {{ $t('actions.submit') }}
+                    <div v-if="customer">{{ $t('actions.update') }}</div>
+                    <div v-else>{{ $t('actions.submit') }}</div>
                 </Button>
                 <Button type="button" :disabled="processing" variant="destructive" class="cursor-pointer"
                     @click="router.visit(customers.index().url)">

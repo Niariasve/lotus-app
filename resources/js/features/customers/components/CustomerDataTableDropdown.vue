@@ -25,6 +25,7 @@
         AlertDialogTitle,
     } from "@/components/ui/alert-dialog"
 
+
     const props = defineProps<{
         customer: Customer,
     }>();
@@ -73,7 +74,7 @@
                 New order
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <Link :href="edit(customer.id).url">
+            <Link :href="edit(customer.id).url" :method="edit(customer.id).method">
                 <DropdownMenuItem>
                     <MoreHorizontal class="w-4 h-4" />
                     See more

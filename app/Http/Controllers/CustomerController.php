@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Customers\StoreRequest;
+use App\Http\Requests\Customers\UpdateRequest;
 use App\Models\ContactPlatform;
 use App\Models\Customer;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -33,13 +33,54 @@ class CustomerController extends Controller
     {
         $validated = $request->validated();
 
-        $platforms = $validated['platform'];
-        $primary = $validated['primary_platform'];
+        $platforms = $validated['platform'] ?? [];
+        $primary = $validated['primary_platform'] ?? null;
 
         unset($validated['platform'], $validated['primary_platform']);
 
         $customer = Customer::create($validated);
 
+        $this->syncCustomerContacts($customer, $platforms, $primary);
+
+        return redirect()->route('customers.index');
+    }
+
+    public function edit(Customer $customer)
+    {
+        $contactPlatforms = ContactPlatform::where('is_active', true)
+            ->get(['id', 'name', 'slug']);
+
+        $customerContacts = $customer->contactPlatforms;
+
+        $primary = $customer->primaryContactPlatform->contactPlatform;
+
+        return Inertia::render('customers/Edit', [
+            'customer' => $customer,
+            'contactPlatforms' => $contactPlatforms,
+            'customerContacts' => $customerContacts,
+            'primary' => $primary
+        ]);
+    }
+
+    public function update(UpdateRequest $request, Customer $customer)
+    {
+        $validated = $request->validated();
+
+        $platforms = $validated['platform'] ?? [];
+        $primary = $validated['primary_platform'] ?? null;
+
+        unset($validated['platform'], $validated['primary_platform']);
+
+        $customer->update($validated);
+
+        $customer->contactPlatforms()->delete();
+        $this->syncCustomerContacts($customer, $platforms, $primary);
+
+        return redirect()->route('customers.index');
+    }
+
+    private function syncCustomerContacts(Customer $customer, array $platforms, ?string $primary): void
+    {
         foreach ($platforms as $slug => $identifier) {
             if (!filled($identifier)) continue;
 
@@ -54,7 +95,5 @@ class CustomerController extends Controller
                 'is_primary' => $primary === $slug,
             ]);
         }
-
-        return redirect()->route('customers.index');
     }
 }

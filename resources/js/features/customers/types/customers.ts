@@ -17,5 +17,7 @@ export interface CustomerContact {
     id: number,
     contact_identifier: string,
     is_primary: boolean,
+    customer_id: number,
+    platform_id: number,
     contact_platform: ContactPlatform,
 }
