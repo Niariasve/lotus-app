@@ -25,7 +25,7 @@ class ContactPlatformController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('contactPlatforms/Create');
     }
 
     /**

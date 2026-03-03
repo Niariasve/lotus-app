@@ -23,11 +23,9 @@
         },
     ];
 
-    const props = defineProps<{
+    defineProps<{
         contactPlatforms: ContactPlatform[],
     }>();
-
-    console.log(props.contactPlatforms);
 </script>
 
 <template>
