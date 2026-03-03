@@ -64,7 +64,7 @@
                         <TableCell>{{ platform.created_at }}</TableCell>
                         <TableCell>{{ platform.updated_at }}</TableCell>
                         <TableCell class="flex gap-2">
-                            <Button class="cursor-pointer">
+                            <Button @click="router.visit(contactPlatformsRoutes.edit(platform.id).url)" class="cursor-pointer">
                                 <Pencil class="w-4 h-4" />
                                 Edit
                             </Button>

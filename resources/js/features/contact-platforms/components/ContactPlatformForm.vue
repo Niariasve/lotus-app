@@ -40,7 +40,7 @@
                             <InputError :message="errors.name" />
                         </Field>
                         <Field class="flex gap-3 flex-row justify-left">
-                            <input id="is_active" type="checkbox" name="is_active" class="w-4!" />
+                            <input id="is_active" type="checkbox" name="is_active" class="w-4!" :checked="contactPlatform?.is_active" />
                             <FieldLabel for="is_active">Is Active</FieldLabel>
                             <InputError :message="errors.is_active" />
                         </Field>
