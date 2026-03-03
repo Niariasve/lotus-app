@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContactPlatformController;
 use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -17,6 +18,11 @@ Route::get('dashboard', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)
+        ->except(['show']);
+});
+
+Route::middleware(['auth'])->group(function() {
+    Route::resource('contact-platforms', ContactPlatformController::class)
         ->except(['show']);
 });
 
