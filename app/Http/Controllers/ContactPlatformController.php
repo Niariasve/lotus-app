@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContactPlatform;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ContactPlatformController extends Controller
@@ -50,7 +51,7 @@ class ContactPlatformController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(ContactPlatform $contactPlatform)
-    {   
+    {
         return Inertia::render('contactPlatforms/Edit', [
             'contactPlatform' => $contactPlatform,
         ]);
@@ -61,7 +62,28 @@ class ContactPlatformController extends Controller
      */
     public function update(Request $request, ContactPlatform $contactPlatform)
     {
-        //
+        $request->merge([
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('contact_platforms', 'slug')
+                    ->ignore($contactPlatform->id)
+                    ->where(
+                        fn($query) =>
+                        $query->where('slug', strtolower($request->name))
+                    ),
+            ],
+            'is_active' => 'required|boolean',
+        ]);
+
+        $contactPlatform->update($validated);
+
+        return redirect(route('contact-platforms.index'));
     }
 
     /**
