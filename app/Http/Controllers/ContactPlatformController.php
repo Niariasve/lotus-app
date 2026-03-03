@@ -46,7 +46,7 @@ class ContactPlatformController extends Controller
                 'max:50',
                 Rule::unique('contact_platforms', 'slug')
                     ->where(
-                        fn ($query) => 
+                        fn($query) =>
                         $query->where('slug', strtolower($request->name))
                     )
             ],
@@ -103,6 +103,14 @@ class ContactPlatformController extends Controller
      */
     public function destroy(ContactPlatform $contactPlatform)
     {
-        //
+        if ($contactPlatform->customerContact()->exists()) {
+            return Inertia::flash([
+                'error' => 'Contact Platform can not be deleted because there are users asociated.'
+            ])->back();
+        }
+
+        $contactPlatform->delete();
+
+        return back();
     }
 }

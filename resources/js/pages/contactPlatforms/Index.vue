@@ -1,6 +1,8 @@
 <script setup lang="ts">
-    import { Head, router } from '@inertiajs/vue3';
-    import { Pencil, Plus } from 'lucide-vue-next';
+    import { Head, router, usePage } from '@inertiajs/vue3';
+    import { Pencil, Plus, Trash } from 'lucide-vue-next';
+    import { ref } from 'vue';
+    import { toast } from 'vue-sonner';
     import Heading from '@/components/Heading.vue';
     import { Button } from '@/components/ui/button';
     import {
@@ -26,6 +28,27 @@
     defineProps<{
         contactPlatforms: ContactPlatform[],
     }>();
+
+    const page = usePage();
+
+    console.log(page.flash.error);
+
+    const processing = ref(false);
+    const handleDelete = (id: number) => {
+        processing.value = true;
+
+        router.delete(contactPlatformsRoutes.destroy(id), {
+            onFlash: ({ error }) => {
+                if (error) {
+                    toast.error('Contact Platform was not deleted', {
+                        description: error,
+                        duration: 5000,
+                        position: 'top-center',
+                    });
+                }
+            }
+        })
+    }
 </script>
 
 <template>
@@ -64,13 +87,19 @@
                         <TableCell>{{ platform.created_at }}</TableCell>
                         <TableCell>{{ platform.updated_at }}</TableCell>
                         <TableCell class="flex gap-2">
-                            <Button @click="router.visit(contactPlatformsRoutes.edit(platform.id).url)" class="cursor-pointer">
+                            <Button @click="router.visit(contactPlatformsRoutes.edit(platform.id).url)"
+                                class="cursor-pointer">
                                 <Pencil class="w-4 h-4" />
                                 Edit
                             </Button>
                             <Button class="cursor-pointer" variant="secondary">
                                 <div v-if="platform.is_active">Deactivate</div>
                                 <div v-else>Activate</div>
+                            </Button>
+                            <Button @click="() => handleDelete(platform.id)"
+                                class="cursor-pointer" variant="destructive">
+                                <Trash class="w-4 h-4" />
+                                Delete
                             </Button>
                         </TableCell>
                     </TableRow>
