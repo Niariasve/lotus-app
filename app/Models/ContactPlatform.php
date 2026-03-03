@@ -15,6 +15,6 @@ class ContactPlatform extends Model
 
     public function customerContact(): HasMany
     {
-        return $this->hasMany(CustomerContact::class);
+        return $this->hasMany(CustomerContact::class, 'platform_id');
     }
 }
