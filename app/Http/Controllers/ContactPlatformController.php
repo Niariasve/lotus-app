@@ -33,7 +33,17 @@ class ContactPlatformController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:50',
+        ]);
+
+        ContactPlatform::create([
+            'name' => $request->name,
+            'slug' => strtolower($request->name),
+            'is_active' => $request->is_active ? true : false,
+        ]);
+
+        return redirect(route('contact-platforms.index'));
     }
 
     /**

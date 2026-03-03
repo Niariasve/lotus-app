@@ -39,9 +39,11 @@
                                 :default-value="contactPlatform?.name" :disabled="processing" />
                             <InputError :message="errors.name" />
                         </Field>
-                        <Field class="flex gap-3 flex-row justify-left">
-                            <input id="is_active" type="checkbox" name="is_active" class="w-4!" :checked="contactPlatform?.is_active" />
-                            <FieldLabel for="is_active">Is Active</FieldLabel>
+                        <Field class="flex flex-col gap-3 justify-left">
+                            <div class="flex flex-row gap-3">
+                                <input id="is_active" type="checkbox" name="is_active" class="w-4!" :checked="contactPlatform?.is_active" />
+                                <FieldLabel for="is_active">Is Active</FieldLabel>
+                            </div>
                             <InputError :message="errors.is_active" />
                         </Field>
                     </FieldGroup>
