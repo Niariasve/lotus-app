@@ -4,6 +4,8 @@ import { i18nVue } from 'laravel-vue-i18n';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import '../css/app.css';
+import 'vue-sonner/style.css';
+import { Toaster } from 'vue-sonner';
 import { initializeTheme } from './composables/useAppearance';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -24,6 +26,7 @@ createInertiaApp({
                     return await langs[`../../lang/${lang}.json`]();
                 },
             })
+            .component('Toaster', Toaster)
             .mount(el);
     },
     progress: {
