@@ -34,15 +34,27 @@ class ContactPlatformController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:50',
+        $request->merge([
+            'slug' => strtolower($request->name),
+            'is_active' => $request->boolean('is_active'),
         ]);
 
-        ContactPlatform::create([
-            'name' => $request->name,
-            'slug' => strtolower($request->name),
-            'is_active' => $request->is_active ? true : false,
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('contact_platforms', 'slug')
+                    ->where(
+                        fn ($query) => 
+                        $query->where('slug', strtolower($request->name))
+                    )
+            ],
+            'slug' => 'required|string',
+            'is_active' => 'required|boolean'
         ]);
+
+        ContactPlatform::create($validated);
 
         return redirect(route('contact-platforms.index'));
     }
