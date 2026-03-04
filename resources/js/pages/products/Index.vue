@@ -27,7 +27,7 @@
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-3 overflow-x-auto rounded-xl p-3">
-            <Heading title="Customers" description="Manage customers" class="mb-0" />
+            <Heading title="Products" description="Manage products" class="mb-0" />
             <div class="flex items-center justify-end">
                 <Button @click="router.visit(productsRoutes.create().url)" class="cursor-pointer">
                     <Plus />
