@@ -63,6 +63,12 @@
                                     <InputError :message="errors.full_name" />
                                 </Field>
                                 <Field>
+                                    <FieldLabel for="identification">Identification</FieldLabel>
+                                    <Input id="identification" name="identification" placeholder="0954765781"
+                                        :default-value="customer?.identification" :disabled="processing" />
+                                    <InputError :message="errors.identification" />
+                                </Field>
+                                <Field>
                                     <FieldLabel for="city">City</FieldLabel>
                                     <Input id="city" name="city" placeholder="Guayaquil"
                                         :default-value="customer?.city" :disabled="processing" />

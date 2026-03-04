@@ -20,6 +20,20 @@ export const columns: ColumnDef<Customer>[] = [
         cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('full_name'))
     },
     {
+        accessorKey: 'identification',
+        enableSorting: false,
+        header: ({ column }) => {
+            return h(DataTableColumnHeader<Customer>, {
+                column: column,
+                title: 'Identification',
+            })
+        },
+        cell: ({ row }) => {
+            if (row.original.identification) return row.original.identification
+            else return h("span", { class: 'font-bold ' }, "N/A")
+        }
+    },
+    {
         id: 'primary_contact_platform',
         header: ({ column }) => {
             return h(DataTableColumnHeader<Customer>, {

@@ -24,6 +24,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'full_name' => 'required|string|max:150',
+            'identification' => 'nullable|string|max:15',
             'email' => 'nullable|email|unique:customers,email',
             'phone' => 'nullable|string|max:30',
             'city' => 'nullable|string|max:100',

@@ -3,6 +3,7 @@ import { type ContactPlatform } from "@/features/contact-platforms/types/contact
 export interface Customer {
     id: number,
     full_name: string,
+    identification: string,
     email: string,
     city: string,
     phone: string,
