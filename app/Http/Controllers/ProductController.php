@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Products\StoreRequest;
 use App\Http\Requests\Products\UpdateRequest;
 use App\Models\Product;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
@@ -13,7 +14,11 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
+        $products = Product::all()->except(['created_at', 'updated_at']);
+
+        return Inertia::render('products/Index', [
+            'products' => $products,
+        ]);
     }
 
     /**
