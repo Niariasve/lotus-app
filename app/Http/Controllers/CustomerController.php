@@ -6,6 +6,7 @@ use App\Http\Requests\Customers\StoreRequest;
 use App\Http\Requests\Customers\UpdateRequest;
 use App\Models\ContactPlatform;
 use App\Models\Customer;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -52,7 +53,11 @@ class CustomerController extends Controller
 
         $customerContacts = $customer->contactPlatforms;
 
-        $primary = $customer->primaryContactPlatform->contactPlatform;
+        $primary = null;
+
+        if ($customer->primaryContactPlatform) {
+            $primary = $customer->primaryContactPlatform->contactPlatform;
+        }
 
         return Inertia::render('customers/Edit', [
             'customer' => $customer,
@@ -71,10 +76,19 @@ class CustomerController extends Controller
 
         unset($validated['platform'], $validated['primary_platform']);
 
-        $customer->update($validated);
+        DB::transaction(function () use ($customer, $validated, $platforms, $primary) {
+            $customer->update($validated);
 
-        $customer->contactPlatforms()->delete();
-        $this->syncCustomerContacts($customer, $platforms, $primary);
+            $activePlatformsIds = ContactPlatform::query()
+                ->where('is_active', true)
+                ->pluck('id');
+
+            $customer->contactPlatforms()
+                ->whereIn('platform_id', $activePlatformsIds)
+                ->delete();
+
+            $this->syncCustomerContacts($customer, $platforms, $primary);
+        });
 
         return redirect()->route('customers.index');
     }
