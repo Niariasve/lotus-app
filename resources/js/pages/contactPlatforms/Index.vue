@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { Head, router, usePage } from '@inertiajs/vue3';
+    import { Head, router } from '@inertiajs/vue3';
     import { Pencil, Plus, Trash } from 'lucide-vue-next';
     import { ref } from 'vue';
     import { toast } from 'vue-sonner';
@@ -28,10 +28,6 @@
     defineProps<{
         contactPlatforms: ContactPlatform[],
     }>();
-
-    const page = usePage();
-
-    console.log(page.flash.error);
 
     const processing = ref(false);
     const handleDelete = (id: number) => {

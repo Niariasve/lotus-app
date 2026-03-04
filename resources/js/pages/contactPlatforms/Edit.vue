@@ -26,7 +26,7 @@
 
 <template>
 
-    <Head title="Create Contact Platforms" />
+    <Head :title="`Edit ${contactPlatform.name}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-3 overflow-x-auto rounded-xl p-3">

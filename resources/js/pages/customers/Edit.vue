@@ -34,7 +34,7 @@
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-3 overflow-x-auto rounded-xl p-3">
-            <Heading title="Create Customer" description="Create customer" class="mb-0" />
+            <Heading :title="`Edit ${customer.full_name}`" description="Edit customer" class="mb-0" />
             <div class="flex items-center justify-end">
                 <Button @click="router.visit(customers.index().url)" class="cursor-pointer" variant="destructive">
                     <ArrowLeft />
