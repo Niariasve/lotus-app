@@ -5,11 +5,8 @@ import { type Product } from "./products";
 
 export const columns: ColumnDef<Product>[] = [
     {
-        accessorKey: 'id',
-        header: 'Id',
-    },
-    {
         accessorKey: 'sku',
+        enableSorting: false,
         header: ({ column }) => {
             return h(DataTableColumnHeader<Product>, {
                 column: column,
@@ -59,5 +56,10 @@ export const columns: ColumnDef<Product>[] = [
     {
         accessorKey: 'release_date',
         header: 'Release Date',
+    },
+    {
+        id: 'actions',
+        header: () => h('div', { class: 'text-center' }, 'Actions'),
+        enableHiding: false,
     }
 ]
