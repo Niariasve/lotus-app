@@ -18,4 +18,14 @@ class Product extends Model
         'weight_real',
         'release_date',
     ];
+
+    protected function casts(): array 
+    {
+        return [
+            'height' => 'decimal:3',
+            'weight_est' => 'decimal:3',
+            'weight_real' => 'decimal:3',
+            'release_date' => 'date',
+        ];
+    }
 }
