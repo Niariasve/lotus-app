@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactPlatformController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -23,6 +24,11 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function() {
     Route::resource('contact-platforms', ContactPlatformController::class)
+        ->except(['show']);
+});
+
+Route::middleware(['auth'])->group(function() {
+    Route::resource('products', ProductController::class)
         ->except(['show']);
 });
 
