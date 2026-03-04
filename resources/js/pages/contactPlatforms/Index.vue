@@ -92,10 +92,6 @@
                                 <Pencil class="w-4 h-4" />
                                 Edit
                             </Button>
-                            <Button class="cursor-pointer" variant="secondary">
-                                <div v-if="platform.is_active">Deactivate</div>
-                                <div v-else>Activate</div>
-                            </Button>
                             <Button @click="() => handleDelete(platform.id)"
                                 class="cursor-pointer" variant="destructive">
                                 <Trash class="w-4 h-4" />

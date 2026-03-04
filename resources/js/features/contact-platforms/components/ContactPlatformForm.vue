@@ -41,7 +41,8 @@
                         </Field>
                         <Field class="flex flex-col gap-3 justify-left">
                             <div class="flex flex-row gap-3">
-                                <input id="is_active" type="checkbox" name="is_active" class="w-4!" :checked="contactPlatform?.is_active" />
+                                <input id="is_active" type="checkbox" name="is_active" class="w-4!"
+                                    :checked="contactPlatform?.is_active ? contactPlatform.is_active : true" />
                                 <FieldLabel for="is_active">Is Active</FieldLabel>
                             </div>
                             <InputError :message="errors.is_active" />

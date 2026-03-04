@@ -75,6 +75,7 @@ class ContactPlatformController extends Controller
     public function update(Request $request, ContactPlatform $contactPlatform)
     {
         $request->merge([
+            'slug' => strtolower($request->name),
             'is_active' => $request->boolean('is_active'),
         ]);
 
@@ -90,6 +91,7 @@ class ContactPlatformController extends Controller
                         $query->where('slug', strtolower($request->name))
                     ),
             ],
+            'slug' => 'required|string',
             'is_active' => 'required|boolean',
         ]);
 
@@ -113,4 +115,6 @@ class ContactPlatformController extends Controller
 
         return back();
     }
+
+    
 }
