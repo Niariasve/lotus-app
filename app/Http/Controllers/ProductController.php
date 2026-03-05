@@ -34,7 +34,15 @@ class ProductController extends Controller
      */
     public function store(StoreRequest $request)
     {
-        //
+        $validated = $request->validated();
+
+        Product::create($validated);
+
+        Inertia::flash([
+            'created' => 'Product created succesfully!'
+        ]);
+
+        return redirect(route('products.index'));
     }
 
     /**
