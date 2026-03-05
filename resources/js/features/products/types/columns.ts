@@ -34,7 +34,7 @@ export const columns: ColumnDef<Product>[] = [
         },
         cell: ({ row }) => {
             if (row.original.brand) return row.original.brand
-            else return h('span', { class: 'font-bold' }, 'N/A')
+            else return h('span', { class: 'font-bold' }, '-')
         }
     },
     {
@@ -47,7 +47,7 @@ export const columns: ColumnDef<Product>[] = [
         },
         cell: ({ row }) => {
             if (row.original.line) return row.original.line
-            else return h('span', { class: 'font-bold' }, 'N/A')
+            else return h('span', { class: 'font-bold' }, '-')
         }
     },
     {
@@ -55,7 +55,7 @@ export const columns: ColumnDef<Product>[] = [
         header: 'Height (cm)',
         cell: ({ row }) => {
             if (row.original.height) return row.original.height
-            else return h('span', { class: 'font-bold text-xs' }, 'unknown')
+            else return h('span', { class: 'font-bold text-xs' }, '-')
         }
     },
     {
@@ -63,7 +63,7 @@ export const columns: ColumnDef<Product>[] = [
         header: 'Weight Est. (g)',
         cell: ({ row }) => {
             if (row.original.weight_est) return row.original.weight_est
-            else return h('span', { class: 'font-bold text-xs' }, 'unknown')
+            else return h('span', { class: 'font-bold text-xs' }, '-')
         }
     },
     {
@@ -71,7 +71,7 @@ export const columns: ColumnDef<Product>[] = [
         header: 'Real Weight (g)',
         cell: ({ row }) => {
             if (row.original.weight_real) return row.original.weight_real
-            else return h('span', { class: 'font-bold text-xs' }, 'unknown')
+            else return h('span', { class: 'font-bold text-xs' }, '-')
         }
     },
     {
