@@ -1,6 +1,7 @@
 import { type ColumnDef } from "@tanstack/vue-table";
 import { h } from "vue";
 import DataTableColumnHeader from "@/components/ui/data-table/DataTableColumnHeader.vue";
+import TableDropdown from "../components/ProductDataTableDropdown.vue";
 import { type Product } from "./products";
 
 export const columns: ColumnDef<Product>[] = [
@@ -61,5 +62,9 @@ export const columns: ColumnDef<Product>[] = [
         id: 'actions',
         header: () => h('div', { class: 'text-center' }, 'Actions'),
         enableHiding: false,
+        cell: ({ row }) => {
+            const product = row.original;
+            return h('div', { class: 'relative flex justify-center' }, h(TableDropdown, { product }))
+        }
     }
 ]
