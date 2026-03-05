@@ -8,5 +8,5 @@ export interface Product {
     height: number,
     weight_est: number,
     weight_real: number,
-    release_date: Date,
+    release_date: string,
 }

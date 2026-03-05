@@ -25,7 +25,7 @@ class Product extends Model
             'height' => 'decimal:3',
             'weight_est' => 'decimal:3',
             'weight_real' => 'decimal:3',
-            'release_date' => 'date',
+            'release_date' => 'date:Y-m-d',
         ];
     }
 }

@@ -50,7 +50,9 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        //
+        return Inertia::render('products/Edit', [
+            'product' => $product,
+        ]);
     }
 
     /**

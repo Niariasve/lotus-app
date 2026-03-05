@@ -26,6 +26,8 @@
         if (!props.product) return ProductController.store.form()
         else return ProductController.update.form(props.product!.id)
     }
+
+    console.log(props.product);
 </script>
 
 <template>
@@ -39,27 +41,27 @@
                         <FieldGroup>
                             <Field>
                                 <FieldLabel for="sku">SKU *</FieldLabel>
-                                <Input id="sku" name="sku" placeholder="ABC123456" />
+                                <Input id="sku" name="sku" placeholder="ABC123456" :default-value="product?.sku" />
                                 <InputError :message="errors.sku" />
                             </Field>
                             <Field>
                                 <FieldLabel for="name">Name *</FieldLabel>
-                                <Input id="name" name="name" placeholder="Naruto Shipuden" />
+                                <Input id="name" name="name" placeholder="Naruto Shipuden" :default-value="product?.name" />
                                 <InputError :message="errors.name" />
                             </Field>
                             <Field>
                                 <FieldLabel for="description">Description</FieldLabel>
-                                <Textarea id="description" name="description" placeholder="Product Description..." />
+                                <Textarea id="description" name="description" placeholder="Product Description..." :default-value="product?.description" />
                                 <InputError :message="errors.description" />
                             </Field>
                             <Field>
                                 <FieldLabel for="brand">Brand</FieldLabel>
-                                <Input id="brand" name="brand" placeholder="Sony" />
+                                <Input id="brand" name="brand" placeholder="Sony" :default-value="product?.brand" />
                                 <InputError :message="errors.brand" />
                             </Field>
                             <Field>
                                 <FieldLabel for="line">Line</FieldLabel>
-                                <Input id="line" name="line" placeholder="Idontknow..." />
+                                <Input id="line" name="line" placeholder="Idontknow..." :default-value="product?.line" />
                                 <InputError :message="errors.line" />
                             </Field>
                         </FieldGroup>
@@ -71,22 +73,26 @@
                         <FieldGroup>
                             <Field>
                                 <FieldLabel for="height">Height (cm)</FieldLabel>
-                                <Input id="height" name="height" type="number" min="0" placeholder="35" />
+                                <Input id="height" name="height" type="number" min="0" placeholder="35" :default-value="product?.height" />
+                                <FieldDescription>Enter height in centimeters (cm)</FieldDescription>
                                 <InputError :message="errors.height" />
                             </Field>
                             <Field>
                                 <FieldLabel for="weight_est">Estimated Weight (g)</FieldLabel>
-                                <Input id="weight_est" name="weight_est" type="number" min="0" placeholder="35" />
+                                <Input id="weight_est" name="weight_est" type="number" min="0" placeholder="35" :default-value="product?.weight_est" />
+                                <FieldDescription>Enter estimated weight in grams (g)</FieldDescription>
                                 <InputError :message="errors.weight_est" />
                             </Field>
                             <Field>
                                 <FieldLabel for="weight_real">Real Weight (g)</FieldLabel>
-                                <Input id="weight_real" name="weight_real" type="number" min="0" placeholder="35" />
+                                <Input id="weight_real" name="weight_real" type="number" min="0" placeholder="35" :default-value="product?.weight_real" />
+                                <FieldDescription>Enter real weight in grams (g)</FieldDescription>
                                 <InputError :message="errors.weight_real" />
                             </Field>
                             <Field>
                                 <FieldLabel for="release_date">Release Date</FieldLabel>
-                                <Input id="release_date" name="release_date" type="date" />
+                                <Input id="release_date" name="release_date" type="date" :default-value="product?.release_date" />
+                                <FieldDescription>Enter release date with MM/DD/YYYY format</FieldDescription>
                                 <InputError :message="errors.release_date" />
                             </Field>
                         </FieldGroup>

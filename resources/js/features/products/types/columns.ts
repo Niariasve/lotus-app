@@ -57,6 +57,15 @@ export const columns: ColumnDef<Product>[] = [
     {
         accessorKey: 'release_date',
         header: 'Release Date',
+        cell: ({ row }) => {
+            const date = row.original.release_date;
+
+            if (!date) return '-';
+
+            const [year, month, day] = date.split('-');
+
+            return h('span', `${day}/${month}/${year}`);
+        }
     },
     {
         id: 'actions',
