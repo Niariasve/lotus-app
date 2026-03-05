@@ -39,7 +39,8 @@ class ProductController extends Controller
         Product::create($validated);
 
         Inertia::flash([
-            'created' => 'Product created succesfully!'
+            'type' => 'success',
+            'message' => 'Product created succesfully!'
         ]);
 
         return redirect(route('products.index'));
@@ -60,7 +61,16 @@ class ProductController extends Controller
      */
     public function update(UpdateRequest $request, Product $product)
     {
-        //
+        $validated = $request->validated();
+
+        $product->update($validated);
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Product updated succesfully!'
+        ]);
+
+        return redirect(route('products.index'));
     }
 
     /**
