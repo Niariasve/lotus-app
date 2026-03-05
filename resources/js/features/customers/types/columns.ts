@@ -29,7 +29,7 @@ export const columns: ColumnDef<Customer>[] = [
             })
         },
         cell: ({ row }) => {
-            if (row.original.identification) return row.original.identification
+            if (row.original.identification) return h('span', row.getValue('identification'))
             else return h("span", { class: 'font-bold ' }, "N/A")
         }
     },
@@ -86,7 +86,7 @@ export const columns: ColumnDef<Customer>[] = [
         }
     },
     {
-        id: 'accions',
+        id: 'actions',
         header: () => h('div', { class: 'text-center' }, 'Actions'),
         enableHiding: false,
         cell: ({ row }) => {
