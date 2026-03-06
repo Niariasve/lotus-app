@@ -4,6 +4,11 @@ import DataTableColumnHeader from "@/components/ui/data-table/DataTableColumnHea
 import TableDropdown from "../components/ProductDataTableDropdown.vue";
 import { type Product } from "./products";
 
+const trimDecimal = (value: number) => {
+    if (value === null || value === undefined) return null;
+    return Number(value);
+}
+
 export const columns: ColumnDef<Product>[] = [
     {
         accessorKey: 'sku',
@@ -54,15 +59,15 @@ export const columns: ColumnDef<Product>[] = [
         accessorKey: 'height',
         header: 'Height (cm)',
         cell: ({ row }) => {
-            if (row.original.height) return row.original.height
+            if (row.original.height) return trimDecimal(row.original.height)
             else return h('span', { class: 'font-bold text-xs' }, '-')
         }
     },
     {
         accessorKey: 'weight_est',
-        header: 'Weight Est. (lbs)',
+        header: 'Est. Weight (lbs)',
         cell: ({ row }) => {
-            if (row.original.weight_est) return row.original.weight_est
+            if (row.original.weight_est) return trimDecimal(row.original.weight_est)
             else return h('span', { class: 'font-bold text-xs' }, '-')
         }
     },
@@ -70,7 +75,7 @@ export const columns: ColumnDef<Product>[] = [
         accessorKey: 'weight_real',
         header: 'Real Weight (lbs)',
         cell: ({ row }) => {
-            if (row.original.weight_real) return row.original.weight_real
+            if (row.original.weight_real) return trimDecimal(row.original.weight_real)
             else return h('span', { class: 'font-bold text-xs' }, '-')
         }
     },
