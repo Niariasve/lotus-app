@@ -60,7 +60,7 @@ export const columns: ColumnDef<Product>[] = [
     },
     {
         accessorKey: 'weight_est',
-        header: 'Weight Est. (g)',
+        header: 'Weight Est. (lbs)',
         cell: ({ row }) => {
             if (row.original.weight_est) return row.original.weight_est
             else return h('span', { class: 'font-bold text-xs' }, '-')
@@ -68,7 +68,7 @@ export const columns: ColumnDef<Product>[] = [
     },
     {
         accessorKey: 'weight_real',
-        header: 'Real Weight (g)',
+        header: 'Real Weight (lbs)',
         cell: ({ row }) => {
             if (row.original.weight_real) return row.original.weight_real
             else return h('span', { class: 'font-bold text-xs' }, '-')
