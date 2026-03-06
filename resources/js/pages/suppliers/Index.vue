@@ -11,7 +11,7 @@
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Products',
+            title: 'Suppliers',
             href: suppliersRoutes.index().url,
         },
     ];

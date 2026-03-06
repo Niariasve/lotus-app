@@ -51,7 +51,9 @@ class SupplierController extends Controller
      */
     public function edit(Supplier $supplier)
     {
-        //
+        return Inertia::render('suppliers/Edit', [
+            'supplier' => $supplier,
+        ]);
     }
 
     /**
@@ -59,7 +61,16 @@ class SupplierController extends Controller
      */
     public function update(UpdateRequest $request, Supplier $supplier)
     {
-        //
+        $validated = $request->validated();
+
+        $supplier->update($validated);
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Supplier updated succesfully!'
+        ]);
+
+        return redirect(route('suppliers.index'));
     }
 
     /**
@@ -67,6 +78,13 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
-        //
+        $supplier->delete();
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Supplier deleted succesfully!'
+        ]);
+
+        return back();
     }
 }
