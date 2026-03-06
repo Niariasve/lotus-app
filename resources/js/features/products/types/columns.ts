@@ -1,13 +1,9 @@
 import { type ColumnDef } from "@tanstack/vue-table";
 import { h } from "vue";
 import DataTableColumnHeader from "@/components/ui/data-table/DataTableColumnHeader.vue";
+import { trimDecimal } from "@/lib/utils";
 import TableDropdown from "../components/ProductDataTableDropdown.vue";
 import { type Product } from "./products";
-
-const trimDecimal = (value: number) => {
-    if (value === null || value === undefined) return null;
-    return Number(value);
-}
 
 export const columns: ColumnDef<Product>[] = [
     {
