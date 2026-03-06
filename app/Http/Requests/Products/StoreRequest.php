@@ -33,9 +33,9 @@ class StoreRequest extends FormRequest
             'description' => 'nullable|string',
             'brand' => 'nullable|string|max:120',
             'line' => 'nullable|string|max:120',
-            'height' => 'nullable|numeric|decimal:0,3',
-            'weight_est' => 'nullable|numeric|decimal:0,3',
-            'weight_real' => 'nullable|numeric|decimal:0,3',
+            'height' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
+            'weight_est' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
+            'weight_real' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
             'release_date' => 'nullable|date'
         ];
     }
