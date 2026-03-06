@@ -4,16 +4,6 @@
     import { ref } from 'vue';
     import { toast } from 'vue-sonner';
     import { destroy, edit } from '@/actions/App/Http/Controllers/CustomerController';
-    import Button from '@/components/ui/button/Button.vue';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuLabel,
-        DropdownMenuSeparator,
-        DropdownMenuTrigger
-    } from '@/components/ui/dropdown-menu'
-    import { Customer } from '@/types';
     import {
         AlertDialog,
         AlertDialogAction,
@@ -24,6 +14,16 @@
         AlertDialogHeader,
         AlertDialogTitle,
     } from "@/components/ui/alert-dialog"
+    import Button from '@/components/ui/button/Button.vue';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuLabel,
+        DropdownMenuSeparator,
+        DropdownMenuTrigger
+    } from '@/components/ui/dropdown-menu'
+    import type { Customer } from '@/types';
 
 
     const props = defineProps<{

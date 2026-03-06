@@ -26,8 +26,6 @@
         if (!props.product) return ProductController.store.form()
         else return ProductController.update.form(props.product!.id)
     }
-
-    console.log(props.product);
 </script>
 
 <template>

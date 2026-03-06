@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Suppliers\StoreRequest;
+use App\Http\Requests\Suppliers\UpdateRequest;
 use App\Models\Supplier;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SupplierController extends Controller
@@ -25,15 +26,24 @@ class SupplierController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('suppliers/Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        //
+        $validated = $request->validated();
+
+        Supplier::create($validated);
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Supplier created succesfully!'
+        ]);
+
+        return redirect(route('suppliers.index'));
     }
 
     /**
@@ -47,7 +57,7 @@ class SupplierController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Supplier $supplier)
+    public function update(UpdateRequest $request, Supplier $supplier)
     {
         //
     }

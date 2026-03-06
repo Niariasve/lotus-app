@@ -12,5 +12,6 @@ class Supplier extends Model
         'priority',
         'tax_policy',
         'shipping_policy',
+        'currency',
     ];
 }
