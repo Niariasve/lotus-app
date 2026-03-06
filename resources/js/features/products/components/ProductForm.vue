@@ -73,19 +73,19 @@
                         <FieldGroup>
                             <Field>
                                 <FieldLabel for="height">Height (cm)</FieldLabel>
-                                <Input id="height" name="height" type="number" min="0" step="0.001" placeholder="35" :default-value="product?.height" />
+                                <Input id="height" name="height" type="number" min="0" max="999.999" step="0.001" placeholder="35" :default-value="product?.height" />
                                 <FieldDescription>Enter height in centimeters (cm)</FieldDescription>
                                 <InputError :message="errors.height" />
                             </Field>
                             <Field>
                                 <FieldLabel for="weight_est">Estimated Weight (lb)</FieldLabel>
-                                <Input id="weight_est" name="weight_est" type="number" min="0" step="0.001" placeholder="35" :default-value="product?.weight_est" />
+                                <Input id="weight_est" name="weight_est" type="number" min="0" max="999.999" step="0.001" placeholder="35" :default-value="product?.weight_est" />
                                 <FieldDescription>Enter estimated weight in pounds (lb)</FieldDescription>
                                 <InputError :message="errors.weight_est" />
                             </Field>
                             <Field>
                                 <FieldLabel for="weight_real">Real Weight (lb)</FieldLabel>
-                                <Input id="weight_real" name="weight_real" type="number" min="0" step="0.001" placeholder="35" :default-value="product?.weight_real" />
+                                <Input id="weight_real" name="weight_real" type="number" min="0" max="999.999" step="0.001" placeholder="35" :default-value="product?.weight_real" />
                                 <FieldDescription>Enter real weight in pounds (lb)</FieldDescription>
                                 <InputError :message="errors.weight_real" />
                             </Field>
