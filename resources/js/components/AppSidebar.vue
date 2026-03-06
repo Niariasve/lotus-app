@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { Link } from '@inertiajs/vue3';
-    import { Apple, BookOpen, BookUser, Folder, LayoutGrid, User } from 'lucide-vue-next';
+    import { Apple, BookOpen, BookUser, Container, Folder, LayoutGrid, User } from 'lucide-vue-next';
     import NavFooter from '@/components/NavFooter.vue';
     import NavMain from '@/components/NavMain.vue';
     import NavUser from '@/components/NavUser.vue';
@@ -17,6 +17,7 @@
     import contactPlatforms from '@/routes/contact-platforms';
     import customers from '@/routes/customers';
     import products from '@/routes/products';
+    import suppliers from '@/routes/suppliers';
     import { type NavItem } from '@/types';
     import AppLogo from './AppLogo.vue';
 
@@ -40,6 +41,11 @@
             title: 'Products',
             href: products.index(),
             icon: Apple,
+        },
+        {
+            title: 'Suppliers',
+            href: suppliers.index(),
+            icon: Container,
         }
     ];
 
