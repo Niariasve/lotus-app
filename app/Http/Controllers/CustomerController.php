@@ -13,7 +13,14 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::with('primaryContactPlatform.contactPlatform')->get();
+        $customers = Customer::query()
+            ->select(['id', 'full_name', 'identification', 'email', 'phone', 'city'])
+            ->with([
+                'primaryContactPlatform:id,customer_id,platform_id,contact_identifier',
+                'primaryContactPlatform.contactPlatform:id,name',
+            ])
+            ->latest('id')
+            ->get();
 
         return Inertia::render('customers/Index', [
             'customers' => $customers,
@@ -38,10 +45,11 @@ class CustomerController extends Controller
         $primary = $validated['primary_platform'] ?? null;
 
         unset($validated['platform'], $validated['primary_platform']);
-
-        $customer = Customer::create($validated);
-
-        $this->syncCustomerContacts($customer, $platforms, $primary);
+        
+        DB::transaction(function () use ($validated, $platforms, $primary) {
+            $customer = Customer::create($validated);
+            $this->syncCustomerContacts($customer, $platforms, $primary);
+        });
 
         return redirect()->route('customers.index');
     }
@@ -50,6 +58,8 @@ class CustomerController extends Controller
     {
         $contactPlatforms = ContactPlatform::where('is_active', true)
             ->get(['id', 'name', 'slug']);
+
+        $customer->loadMissing(['contactPlatforms', 'primaryContactPlatform.contactPlatform']);
 
         $customerContacts = $customer->contactPlatforms;
 
@@ -102,16 +112,25 @@ class CustomerController extends Controller
 
     private function syncCustomerContacts(Customer $customer, array $platforms, ?string $primary): void
     {
-        foreach ($platforms as $slug => $identifier) {
-            if (!filled($identifier)) continue;
+        $normalizedPlatforms = collect($platforms)
+            ->filter(fn ($identifier) => filled($identifier));
 
-            $platform = ContactPlatform::where('slug', $slug)->first();
+        if ($normalizedPlatforms->isEmpty()) {
+            return;
+        }
 
-            if (!$platform) continue;
+        $platformsBySlug = ContactPlatform::query()
+            ->where('is_active', true)
+            ->whereIn('slug', $normalizedPlatforms->keys()->all())
+            ->pluck('id', 'slug');
+
+        foreach ($normalizedPlatforms as $slug => $identifier) {
+            $platformId = $platformsBySlug->get($slug);
+
+            if (!$platformId) continue;
 
             $customer->contactPlatforms()->create([
-                'customer_id' => $customer->id,
-                'platform_id' => $platform->id,
+                'platform_id' => $platformId,
                 'contact_identifier' => $identifier,
                 'is_primary' => $primary === $slug,
             ]);
