@@ -34,7 +34,7 @@ export const columns: ColumnDef<Customer>[] = [
         }
     },
     {
-        id: 'primary_contact_platform',
+        id: 'Contact Platform',
         header: ({ column }) => {
             return h(DataTableColumnHeader<Customer>, {
                 column: column,
@@ -52,6 +52,7 @@ export const columns: ColumnDef<Customer>[] = [
                 return h('div', [
                     h('span', { class: 'font-semibold mr-1' }, customer.primary_contact_platform.contact_platform.name),
                     h('span', customer.primary_contact_platform.contact_identifier),
+                    h('span', { class: 'ml-1' }, `(${customer.primary_contact_platform.contact_platform.is_active})`)
                 ]);
             }
         }

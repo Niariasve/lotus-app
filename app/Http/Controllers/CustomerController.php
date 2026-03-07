@@ -17,7 +17,7 @@ class CustomerController extends Controller
             ->select(['id', 'full_name', 'identification', 'email', 'phone', 'city'])
             ->with([
                 'primaryContactPlatform:id,customer_id,platform_id,contact_identifier',
-                'primaryContactPlatform.contactPlatform:id,name',
+                'primaryContactPlatform.contactPlatform:id,name,is_active',
             ])
             ->latest('id')
             ->get();
@@ -51,7 +51,12 @@ class CustomerController extends Controller
             $this->syncCustomerContacts($customer, $platforms, $primary);
         });
 
-        return redirect()->route('customers.index');
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Customer created successfully!',
+        ]);
+
+        return to_route('customers.index');
     }
 
     public function edit(Customer $customer)
@@ -100,14 +105,24 @@ class CustomerController extends Controller
             $this->syncCustomerContacts($customer, $platforms, $primary);
         });
 
-        return redirect()->route('customers.index');
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Customer updated successfully!',
+        ]);
+
+        return to_route('customers.index');
     }
 
     public function destroy(Customer $customer)
     {
         $customer->delete();
 
-        return redirect()->route('customers.index');
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Customer deleted successfully!',
+        ]);
+
+        return to_route('customers.index');
     }
 
     private function syncCustomerContacts(Customer $customer, array $platforms, ?string $primary): void

@@ -2,7 +2,6 @@
     import { Link, router } from '@inertiajs/vue3';
     import { MoreHorizontal, LoaderCircle, Trash2, Send } from 'lucide-vue-next';
     import { ref } from 'vue';
-    import { toast } from 'vue-sonner';
     import { destroy, edit } from '@/actions/App/Http/Controllers/CustomerController';
     import {
         AlertDialog,
@@ -36,21 +35,6 @@
         processing.value = true;
 
         router.delete(destroy(props.customer.id), {
-            onSuccess: () => {
-                toast('Client has been deleted', {
-                    description: 'The client has been deleted succesfully',
-                    duration: 5000,
-                    position: 'top-center',
-                });
-                openDeleteAlert.value = false;
-            },
-            onError: () => {
-                toast('Something went wrong...', {
-                    description: 'The client could not be deleted',
-                    duration: 5000,
-                    position: 'top-center'
-                });
-            },
             onFinish: () => {
                 processing.value = false;
             }
