@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ContactPlatforms\StoreRequest;
+use App\Http\Requests\ContactPlatforms\UpdateRequest;
 use App\Models\ContactPlatform;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ContactPlatformController extends Controller
@@ -32,27 +32,9 @@ class ContactPlatformController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        $request->merge([
-            'slug' => strtolower($request->name),
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('contact_platforms', 'slug')
-                    ->where(
-                        fn($query) =>
-                        $query->where('slug', strtolower($request->name))
-                    )
-            ],
-            'slug' => 'required|string',
-            'is_active' => 'required|boolean'
-        ]);
+        $validated = $request->validated();
 
         ContactPlatform::create($validated);
 
@@ -72,28 +54,9 @@ class ContactPlatformController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ContactPlatform $contactPlatform)
+    public function update(UpdateRequest $request, ContactPlatform $contactPlatform)
     {
-        $request->merge([
-            'slug' => strtolower($request->name),
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('contact_platforms', 'slug')
-                    ->ignore($contactPlatform->id)
-                    ->where(
-                        fn($query) =>
-                        $query->where('slug', strtolower($request->name))
-                    ),
-            ],
-            'slug' => 'required|string',
-            'is_active' => 'required|boolean',
-        ]);
+        $validated = $request->validated();
 
         $contactPlatform->update($validated);
 
