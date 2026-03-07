@@ -43,7 +43,7 @@ class SupplierController extends Controller
             'message' => 'Supplier created succesfully!'
         ]);
 
-        return redirect(route('suppliers.index'));
+        return to_route('suppliers.index');
     }
 
     /**
@@ -70,7 +70,7 @@ class SupplierController extends Controller
             'message' => 'Supplier updated succesfully!'
         ]);
 
-        return redirect(route('suppliers.index'));
+        return to_route('suppliers.index');
     }
 
     /**
