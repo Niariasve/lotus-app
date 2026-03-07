@@ -14,7 +14,20 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all()->except(['created_at', 'updated_at']);
+        $products = Product::query()
+            ->select([
+                'id',
+                'sku',
+                'name',
+                'brand',
+                'line',
+                'height',
+                'weight_est',
+                'weight_real',
+                'release_date',
+            ])
+            ->latest('id')
+            ->get();
 
         return Inertia::render('products/Index', [
             'products' => $products,
@@ -40,10 +53,10 @@ class ProductController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Product created succesfully!'
+            'message' => 'Product created successfully!'
         ]);
 
-        return redirect(route('products.index'));
+        return to_route('products.index');
     }
 
     /**
@@ -67,10 +80,10 @@ class ProductController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Product updated succesfully!'
+            'message' => 'Product updated successfully!'
         ]);
 
-        return redirect(route('products.index'));
+        return to_route('products.index');
     }
 
     /**
@@ -79,7 +92,12 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Product deleted successfully!'
+        ]);
         
-        return back();
+        return to_route('products.index');
     }
 }

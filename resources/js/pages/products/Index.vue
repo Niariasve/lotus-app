@@ -1,8 +1,6 @@
 <script setup lang='ts'>
     import { Head, router } from '@inertiajs/vue3';
     import { Plus } from 'lucide-vue-next';
-    import { onUnmounted } from 'vue';
-    import { ExternalToast, toast } from 'vue-sonner';
     import Heading from '@/components/Heading.vue';
     import { Button } from '@/components/ui/button';
     import DataTable from '@/components/ui/data-table/DataTable.vue';
@@ -21,21 +19,6 @@
     defineProps<{
         products: Product[],
     }>();
-
-    onUnmounted(
-        router.on('flash', (event) => {
-            const options: ExternalToast = {
-                position: 'top-center',
-                duration: 5000,
-            }
-
-            if (event.detail.flash.message) {
-                if (event.detail.flash.type === 'success') {
-                    toast.success(event.detail.flash.message, options);
-                }
-            }
-        })
-    )
 </script>
 
 <template>

@@ -2,7 +2,6 @@
     import { Link, router } from '@inertiajs/vue3';
     import { MoreHorizontal, LoaderCircle, Trash2, Pencil } from 'lucide-vue-next';
     import { ref } from 'vue';
-    import { toast } from 'vue-sonner';
     import { destroy, edit } from '@/actions/App/Http/Controllers/ProductController';
     import {
         AlertDialog,
@@ -36,21 +35,6 @@
         processing.value = true;
 
         router.delete(destroy(props.product.id), {
-            onSuccess: () => {
-                toast.success('Product has been deleted', {
-                    description: 'The product has been deleted succesfully',
-                    duration: 5000,
-                    position: 'top-center',
-                });
-                openDeleteAlert.value = false;
-            },
-            onError: () => {
-                toast.error('Something went wrong...', {
-                    description: 'The product could not be deleted',
-                    duration: 5000,
-                    position: 'top-center'
-                });
-            },
             onFinish: () => {
                 processing.value = false;
             }
