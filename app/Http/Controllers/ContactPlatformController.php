@@ -38,7 +38,12 @@ class ContactPlatformController extends Controller
 
         ContactPlatform::create($validated);
 
-        return redirect(route('contact-platforms.index'));
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Contact Platform created successfully!',
+        ]);
+
+        return to_route('contact-platforms.index');
     }
 
     /**
@@ -60,7 +65,12 @@ class ContactPlatformController extends Controller
 
         $contactPlatform->update($validated);
 
-        return redirect(route('contact-platforms.index'));
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Contact Platform updated successfully!',
+        ]);
+
+        return to_route('contact-platforms.index');
     }
 
     /**
@@ -70,7 +80,8 @@ class ContactPlatformController extends Controller
     {
         if ($contactPlatform->customerContact()->exists()) {
             return Inertia::flash([
-                'error' => 'Contact Platform can not be deleted because there are users asociated.'
+                'type' => 'error',
+                'message' => 'Contact Platform can not be deleted because there are users associated',
             ])->back();
         }
 
@@ -78,6 +89,4 @@ class ContactPlatformController extends Controller
 
         return back();
     }
-
-    
 }

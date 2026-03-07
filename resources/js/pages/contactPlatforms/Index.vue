@@ -2,9 +2,9 @@
     import { Head, router } from '@inertiajs/vue3';
     import { Pencil, Plus, Trash } from 'lucide-vue-next';
     import { ref } from 'vue';
-    import { toast } from 'vue-sonner';
     import Heading from '@/components/Heading.vue';
     import { Button } from '@/components/ui/button';
+    import Spinner from '@/components/ui/spinner/Spinner.vue';
     import {
         Table,
         TableBody,
@@ -34,14 +34,8 @@
         processing.value = true;
 
         router.delete(contactPlatformsRoutes.destroy(id), {
-            onFlash: ({ error }) => {
-                if (error) {
-                    toast.error('Contact Platform was not deleted', {
-                        description: error,
-                        duration: 5000,
-                        position: 'top-center',
-                    });
-                }
+            onFinish: () => {
+                processing.value = false;
             }
         })
     }
@@ -89,8 +83,9 @@
                                 Edit
                             </Button>
                             <Button @click="() => handleDelete(platform.id)"
-                                class="cursor-pointer" variant="destructive">
-                                <Trash class="w-4 h-4" />
+                                class="cursor-pointer" variant="destructive" :disabled="processing">
+                                <Spinner v-if="processing" class="animate-spin" />
+                                <Trash v-else class="w-4 h-4" />
                                 Delete
                             </Button>
                         </TableCell>
