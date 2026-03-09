@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SupplierProductOffers\StoreRequest;
+use App\Http\Requests\SupplierProductOffers\UpdateRequest;
 use App\Models\SupplierProductOffer;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SupplierProductOfferController extends Controller
@@ -31,9 +32,18 @@ class SupplierProductOfferController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        //
+        $validated = $request->validated();
+
+        SupplierProductOffer::create($validated);
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Supplier product offer created successfully!',
+        ]);
+
+        return to_route('supplier-product-offer.index');
     }
 
     /**
@@ -55,9 +65,18 @@ class SupplierProductOfferController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, SupplierProductOffer $supplierProductOffer)
+    public function update(UpdateRequest $request, SupplierProductOffer $supplierProductOffer)
     {
-        //
+        $validated = $request->validated();
+
+        $supplierProductOffer->update($validated);
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Supplier product offer updated successfully!',
+        ]);
+
+        return to_route('supplier-product-offer.index');
     }
 
     /**
