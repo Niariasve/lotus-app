@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SupplierProductOffers\StoreRequest;
 use App\Http\Requests\SupplierProductOffers\UpdateRequest;
+use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\SupplierProductOffer;
 use Inertia\Inertia;
 
@@ -26,7 +28,18 @@ class SupplierProductOfferController extends Controller
      */
     public function create()
     {
-        //
+        $suppliers = Supplier::query()
+            ->orderBy('name')
+            ->get();
+
+        $products = Product::query()
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('supplierProductOffer/Create', [
+            'suppliers' => $suppliers,
+            'products' => $products,
+        ]);
     }
 
     /**
@@ -59,7 +72,19 @@ class SupplierProductOfferController extends Controller
      */
     public function edit(SupplierProductOffer $supplierProductOffer)
     {
-        //
+        $suppliers = Supplier::query()
+            ->orderBy('name')
+            ->get();
+
+        $products = Product::query()
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('supplierProductOffer/Edit', [
+            'supplierProductOffer' => $supplierProductOffer,
+            'suppliers' => $suppliers,
+            'products' => $products,
+        ]);
     }
 
     /**
@@ -84,6 +109,13 @@ class SupplierProductOfferController extends Controller
      */
     public function destroy(SupplierProductOffer $supplierProductOffer)
     {
-        //
+        $supplierProductOffer->delete();
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Supplier product offer deleted successfully!',
+        ]);
+
+        return back();
     }
 }
