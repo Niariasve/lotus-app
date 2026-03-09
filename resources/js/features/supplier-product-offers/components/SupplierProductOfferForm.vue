@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import { Form, router } from '@inertiajs/vue3';
+    import { computed, ref, watch } from 'vue';
     import SupplierProductOfferController from '@/actions/App/Http/Controllers/SupplierProductOfferController';
     import InputError from '@/components/InputError.vue';
     import { Button } from '@/components/ui/button';
@@ -31,6 +32,31 @@
         if (!props.supplierProductOffer) return SupplierProductOfferController.store.form();
         return SupplierProductOfferController.update.form(props.supplierProductOffer.id);
     };
+
+    const selectedAvailability = ref(
+        props.supplierProductOffer ? (props.supplierProductOffer.is_available ? '1' : '0') : '1',
+    );
+    const lastCheckedAt = ref(props.supplierProductOffer?.last_checked_at ?? '');
+
+    const displayLastCheckedAt = computed(() => {
+        if (!lastCheckedAt.value) return 'Not checked yet';
+
+        const parsed = new Date(lastCheckedAt.value);
+        if (Number.isNaN(parsed.getTime())) return 'Not checked yet';
+
+        return parsed.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    });
+
+    watch(selectedAvailability, (value, oldValue) => {
+        if (!oldValue || value === oldValue) return;
+        lastCheckedAt.value = new Date().toISOString();
+    });
 </script>
 
 <template>
@@ -118,8 +144,7 @@
                             <Field>
                                 <FieldLabel>Is Available *</FieldLabel>
                                 <InputError :message="errors.is_available" />
-                                <RadioGroup name="is_available"
-                                    :default-value="supplierProductOffer ? (supplierProductOffer.is_available ? '1' : '0') : '1'">
+                                <RadioGroup name="is_available" v-model="selectedAvailability">
                                     <Field>
                                         <div class="flex items-center space-x-2">
                                             <RadioGroupItem id="is-available-yes" value="1" :disabled="processing" />
@@ -135,10 +160,14 @@
                                 </RadioGroup>
                             </Field>
                             <Field>
-                                <FieldLabel for="last_checked_at">Last Checked At</FieldLabel>
-                                <Input id="last_checked_at" name="last_checked_at" type="datetime-local"
-                                    :default-value="supplierProductOffer?.last_checked_at?.replace(' ', 'T').slice(0, 16)"
-                                    :disabled="processing" />
+                                <FieldLabel>Last Checked At</FieldLabel>
+                                <Input name="last_checked_at" type="hidden" :value="lastCheckedAt" />
+                                <div class="text-sm text-muted-foreground">
+                                    {{ displayLastCheckedAt }}
+                                </div>
+                                <FieldDescription>
+                                    Automatically updated when availability is changed.
+                                </FieldDescription>
                                 <InputError :message="errors.last_checked_at" />
                             </Field>
                         </FieldGroup>

@@ -16,7 +16,25 @@ class SupplierProductOfferController extends Controller
      */
     public function index()
     {
-        $supplierProductOffers = SupplierProductOffer::all();
+        $supplierProductOffers = SupplierProductOffer::query()
+            ->select([
+                'id',
+                'supplier_id',
+                'product_id',
+                'base_cost',
+                'currency',
+                'estimated_tax',
+                'estimated_shipping',
+                'other_fees',
+                'is_available',
+                'last_checked_at',
+            ])
+            ->with([
+                'supplier:id,name',
+                'product:id,name,sku',
+            ])
+            ->latest('id')
+            ->get();
 
         return Inertia::render('supplierProductOffer/Index', [
             'supplierProductOffers' => $supplierProductOffers,
