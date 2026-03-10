@@ -1,27 +1,9 @@
 import { type ColumnDef } from '@tanstack/vue-table';
 import { h } from 'vue';
 import DataTableColumnHeader from '@/components/ui/data-table/DataTableColumnHeader.vue';
+import { formatDateTime } from '@/lib/utils';
 import TableDropdown from '../components/SupplierProductOfferDataTableDropdown.vue';
 import { type SupplierProductOffer } from './supplierProductOffers';
-
-const toNumber = (value: number | string): number => Number(value ?? 0);
-const formatCurrency = (currency: string, value: number | string): string =>
-    `${currency} ${toNumber(value).toFixed(2)}`;
-
-const formatDateTime = (value: string | null): string => {
-    if (!value) return 'Not checked';
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Not checked';
-
-    return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-};
 
 export const columns: ColumnDef<SupplierProductOffer>[] = [
     {
@@ -60,33 +42,12 @@ export const columns: ColumnDef<SupplierProductOffer>[] = [
         cell: ({ row }) => row.getValue('product'),
     },
     {
-        accessorKey: 'base_cost',
-        header: ({ column }) => {
-            return h(DataTableColumnHeader<SupplierProductOffer>, {
-                column,
-                title: 'Base Cost',
-            });
-        },
-        cell: ({ row }) => formatCurrency(row.original.currency, row.original.base_cost),
-    },
-    {
-        id: 'estimated_total',
-        accessorFn: (supplierProductOffer) =>
-            toNumber(supplierProductOffer.base_cost) +
-            toNumber(supplierProductOffer.estimated_tax) +
-            toNumber(supplierProductOffer.estimated_shipping) +
-            toNumber(supplierProductOffer.other_fees),
-        header: ({ column }) => {
-            return h(DataTableColumnHeader<SupplierProductOffer>, {
-                column,
-                title: 'Estimated Total',
-            });
-        },
-        cell: ({ row }) => formatCurrency(row.original.currency, row.getValue('estimated_total') as number),
-    },
-    {
-        accessorKey: 'currency',
-        header: 'Currency',
+        accessorKey: 'retail_price',
+        header: 'Retail Price',
+        cell: ({ row }) => {
+            const supplier = row.original.supplier;
+            return supplier ? `${supplier.currency} ${row.original.retail_price}` : row.original.retail_price;
+        }
     },
     {
         id: 'availability',

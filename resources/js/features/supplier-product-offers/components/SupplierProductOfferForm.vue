@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { Form, router } from '@inertiajs/vue3';
-    import { computed, ref, watch } from 'vue';
+    import { computed, ref } from 'vue';
     import SupplierProductOfferController from '@/actions/App/Http/Controllers/SupplierProductOfferController';
     import InputError from '@/components/InputError.vue';
     import { Button } from '@/components/ui/button';
@@ -15,9 +15,14 @@
     } from '@/components/ui/field';
     import { Input } from '@/components/ui/input';
     import {
-        RadioGroup,
-        RadioGroupItem,
-    } from '@/components/ui/radio-group';
+        Select,
+        SelectContent,
+        SelectGroup,
+        SelectItem,
+        SelectLabel,
+        SelectTrigger,
+        SelectValue,
+    } from '@/components/ui/select';
     import { Spinner } from '@/components/ui/spinner';
     import supplierProductOfferRoutes from '@/routes/supplier-product-offer';
     import { type Product, type Supplier, type SupplierProductOffer } from '@/types';
@@ -33,30 +38,22 @@
         return SupplierProductOfferController.update.form(props.supplierProductOffer.id);
     };
 
-    const selectedAvailability = ref(
-        props.supplierProductOffer ? (props.supplierProductOffer.is_available ? '1' : '0') : '1',
+    const supplierId = ref<number | null>(
+        props.supplierProductOffer ? props.supplierProductOffer.supplier_id : null
     );
-    const lastCheckedAt = ref(props.supplierProductOffer?.last_checked_at ?? '');
 
-    const displayLastCheckedAt = computed(() => {
-        if (!lastCheckedAt.value) return 'Not checked yet';
+    const selectedSupplier = computed(() => 
+        props.suppliers.find((s) => s.id === supplierId.value)
+    );
 
-        const parsed = new Date(lastCheckedAt.value);
-        if (Number.isNaN(parsed.getTime())) return 'Not checked yet';
+    const productId = ref<number | null>(
+        props.supplierProductOffer ? props.supplierProductOffer.product_id : null
+    );
 
-        return parsed.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    });
+    const selectedProduct = computed(() => 
+        props.products.find((p) => p.id === productId.value)
+    );
 
-    watch(selectedAvailability, (value, oldValue) => {
-        if (!oldValue || value === oldValue) return;
-        lastCheckedAt.value = new Date().toISOString();
-    });
 </script>
 
 <template>
@@ -69,107 +66,68 @@
                         <FieldDescription>Supplier and product for this offer</FieldDescription>
                         <FieldGroup>
                             <Field>
+                                <input type="hidden" name="supplier_id" :value="supplierId" />
                                 <FieldLabel for="supplier_id">Supplier *</FieldLabel>
-                                <select id="supplier_id" name="supplier_id" :disabled="processing"
-                                    :value="supplierProductOffer?.supplier_id"
-                                    class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                                    <option value="" disabled>Select a supplier</option>
-                                    <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
-                                        {{ supplier.name }}
-                                    </option>
-                                </select>
+                                <Select v-model="supplierId">
+                                    <SelectTrigger class="w-auto">
+                                        <SelectValue placeholder="Select a Supplier" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Suppliers</SelectLabel>
+                                        </SelectGroup>
+                                        <SelectItem v-for="(supplier, index) in suppliers" :key="index"
+                                            :value="supplier.id">
+                                            {{ supplier.name }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <InputError :message="errors.supplier_id" />
-                            </Field>
-                            <Field>
-                                <FieldLabel for="product_id">Product *</FieldLabel>
-                                <select id="product_id" name="product_id" :disabled="processing"
-                                    :value="supplierProductOffer?.product_id"
-                                    class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                                    <option value="" disabled>Select a product</option>
-                                    <option v-for="product in products" :key="product.id" :value="product.id">
-                                        {{ product.sku }} - {{ product.name }}
-                                    </option>
-                                </select>
-                                <InputError :message="errors.product_id" />
-                            </Field>
-                            <Field>
-                                <FieldLabel for="currency">Currency *</FieldLabel>
-                                <Input id="currency" name="currency" maxlength="3" placeholder="USD"
-                                    :default-value="supplierProductOffer?.currency ?? 'USD'" :disabled="processing" />
-                                <InputError :message="errors.currency" />
-                            </Field>
-                        </FieldGroup>
-                    </FieldSet>
-                    <FieldSeparator />
-                    <FieldSet>
-                        <FieldLegend>Pricing</FieldLegend>
-                        <FieldDescription>Costs and estimated fees for the supplier offer</FieldDescription>
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel for="base_cost">Base Cost *</FieldLabel>
-                                <Input id="base_cost" name="base_cost" type="number" min="0" max="99999999.99"
-                                    step="0.01" :default-value="supplierProductOffer?.base_cost" :disabled="processing"
-                                    required />
-                                <InputError :message="errors.base_cost" />
-                            </Field>
-                            <Field>
-                                <FieldLabel for="estimated_tax">Estimated Tax</FieldLabel>
-                                <Input id="estimated_tax" name="estimated_tax" type="number" min="0" max="99999999.99"
-                                    step="0.01" :default-value="supplierProductOffer?.estimated_tax ?? 0"
-                                    :disabled="processing" />
-                                <InputError :message="errors.estimated_tax" />
-                            </Field>
-                            <Field>
-                                <FieldLabel for="estimated_shipping">Estimated Shipping</FieldLabel>
-                                <Input id="estimated_shipping" name="estimated_shipping" type="number" min="0"
-                                    max="99999999.99" step="0.01"
-                                    :default-value="supplierProductOffer?.estimated_shipping ?? 0"
-                                    :disabled="processing" />
-                                <InputError :message="errors.estimated_shipping" />
-                            </Field>
-                            <Field>
-                                <FieldLabel for="other_fees">Other Fees</FieldLabel>
-                                <Input id="other_fees" name="other_fees" type="number" min="0" max="99999999.99"
-                                    step="0.01" :default-value="supplierProductOffer?.other_fees ?? 0"
-                                    :disabled="processing" />
-                                <InputError :message="errors.other_fees" />
-                            </Field>
-                        </FieldGroup>
-                    </FieldSet>
-                    <FieldSeparator />
-                    <FieldSet>
-                        <FieldLegend>Availability</FieldLegend>
-                        <FieldDescription>Current availability and verification date</FieldDescription>
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel>Is Available *</FieldLabel>
-                                <InputError :message="errors.is_available" />
-                                <RadioGroup name="is_available" v-model="selectedAvailability">
-                                    <Field>
-                                        <div class="flex items-center space-x-2">
-                                            <RadioGroupItem id="is-available-yes" value="1" :disabled="processing" />
-                                            <FieldLabel for="is-available-yes" class="text-sm">Available</FieldLabel>
-                                        </div>
-                                    </Field>
-                                    <Field>
-                                        <div class="flex items-center space-x-2">
-                                            <RadioGroupItem id="is-available-no" value="0" :disabled="processing" />
-                                            <FieldLabel for="is-available-no" class="text-sm">Unavailable</FieldLabel>
-                                        </div>
-                                    </Field>
-                                </RadioGroup>
-                            </Field>
-                            <Field>
-                                <FieldLabel>Last Checked At</FieldLabel>
-                                <Input name="last_checked_at" type="hidden" :value="lastCheckedAt" />
-                                <div class="text-sm text-muted-foreground">
-                                    {{ displayLastCheckedAt }}
+
+                                <div v-if="selectedSupplier" class="rounded-md border p-3 text-sm">
+
                                 </div>
-                                <FieldDescription>
-                                    Automatically updated when availability is changed.
-                                </FieldDescription>
-                                <InputError :message="errors.last_checked_at" />
                             </Field>
+
+                            <Field>
+                                <input type="hidden" name="product_id" :value="productId" />
+                                <FieldLabel for="product_id">Product *</FieldLabel>
+                                <Select v-model="productId">
+                                    <SelectTrigger class="w-auto">
+                                        <SelectValue placeholder="Select a Product" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Products</SelectLabel>
+                                        </SelectGroup>
+                                        <SelectItem v-for="(product, index) in products" :key="index"
+                                            :value="product.id">
+                                            {{ product.name }}
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError :message="errors.product_id" />
+
+                                <div v-if="selectedProduct" class="rounded-md border p-3 text-sm">
+                                    <p><strong>SKU:</strong> {{ selectedProduct.sku }}</p>
+                                    <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
+                                    <p><strong>Height:</strong> {{ selectedProduct.height || 'N/A' }}</p>
+                                    <p><strong>Est. Weight:</strong> {{ selectedProduct.weight_est || 'N/A' }}</p>
+                                    <p><strong>Real Weight:</strong> {{ selectedProduct.weight_real || 'N/A' }}</p>
+                                </div>
+                            </Field>
+
+                            <Field>
+                                <FieldLabel for="priority">Priority *</FieldLabel>
+                                <Input id="priority" name="priority" :default-value="supplierProductOffer?.priority"
+                                    type="number" min="0" placeholder="Ej: 2" />
+                            </Field>
+                        </FieldGroup>
+                        <FieldSeparator />
+                        <FieldGroup>
+                            <FieldSet>
+                                <FieldLegend>Retail Price Calculator</FieldLegend>
+                            </FieldSet>
                         </FieldGroup>
                     </FieldSet>
                 </FieldGroup>

@@ -24,24 +24,18 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->comment('Product offered by the supplier');
 
+            $table->unsignedInteger('priority')
+                ->default(50)
+                ->comment('Priority level on which a price should be given to a customer (lower number is more priority).');
+
             $table->decimal('base_cost', 10, 2)
                 ->comment('Base cost of the product without taxes or shipping');
 
-            $table->char('currency', 3)
-                ->default('USD')
-                ->comment('Currency code in ISO 4217 format');
-
-            $table->decimal('estimated_tax', 10, 2)
-                ->default(0)
-                ->comment('Estimated tax applicable to this offer');
-
-            $table->decimal('estimated_shipping', 10, 2)
-                ->default(0)
-                ->comment('Estimated shipping cost associated with this offer');
-
-            $table->decimal('other_fees', 10, 2)
-                ->default(0)
-                ->comment('Other estimated charges (customs, commissions, etc.)');
+            $table->decimal('retail_price', 10, 2)
+                ->comment('Retail price calculated by {[(base_cost + shipping)*supplier_tax + 8.75*product_weight]*profit_percentage}');
+            
+            $table->decimal('profit_percentage', 5, 4)
+                ->comment('Profit percentage on this supplier product offer');
 
             $table->boolean('is_available')
                 ->default(true)
@@ -53,8 +47,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['supplier_id', 'product_id']);
-            $table->index(['product_id', 'is_available', 'base_cost']);
+            $table->unique(['supplier_id', 'product_id', 'priority']);
+            $table->index(['product_id', 'is_available', 'retail_price'], 'spo_product_available_price_idx');
         });
     }
 

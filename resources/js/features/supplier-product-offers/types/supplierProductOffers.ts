@@ -1,21 +1,15 @@
+import { type Product, type Supplier } from "@/types";
+
 export interface SupplierProductOffer {
     id: number,
     supplier_id: number,
     product_id: number,
+    priority: number | string,
     base_cost: number | string,
-    currency: string,
-    estimated_tax: number | string,
-    estimated_shipping: number | string,
-    other_fees: number | string,
+    retail_price: number | string,
+    profit_percentage: number,
     is_available: boolean,
     last_checked_at: string | null,
-    supplier?: {
-        id: number,
-        name: string,
-    } | null,
-    product?: {
-        id: number,
-        name: string,
-        sku?: string | null,
-    } | null,
+    supplier?: Supplier | null,
+    product?: Product | null,
 }

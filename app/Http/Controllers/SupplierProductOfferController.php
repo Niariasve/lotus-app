@@ -21,17 +21,16 @@ class SupplierProductOfferController extends Controller
                 'id',
                 'supplier_id',
                 'product_id',
+                'retail_price',
+                'profit_percentage',
+                'priority',
                 'base_cost',
-                'currency',
-                'estimated_tax',
-                'estimated_shipping',
-                'other_fees',
                 'is_available',
                 'last_checked_at',
             ])
             ->with([
-                'supplier:id,name',
-                'product:id,name,sku',
+                'supplier:id,name,currency',
+                'product:id,name,height,weight_est,weight_real',
             ])
             ->latest('id')
             ->get();

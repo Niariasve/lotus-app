@@ -32,11 +32,10 @@ class UpdateRequest extends FormRequest
                     ->ignore($this->route('supplier_product_offer')->id)
                     ->where(fn ($query) => $query->where('supplier_id', $this->input('supplier_id'))),
             ],
+            'priority' => 'sometimes|integer|min:0',
             'base_cost' => 'required|decimal:0,2|min:0|max:99999999.99',
-            'currency' => 'required|string|size:3|regex:/^[A-Z]{3}$/',
-            'estimated_tax' => 'sometimes|decimal:0,2|min:0|max:99999999.99',
-            'estimated_shipping' => 'sometimes|decimal:0,2|min:0|max:99999999.99',
-            'other_fees' => 'sometimes|decimal:0,2|min:0|max:99999999.99',
+            'retail_price' => 'required|decimal:0,2|min:0|max:99999999.99',
+            'profit_percentage' => 'required|decimal:0,4|min:0|max:1',
             'is_available' => 'sometimes|boolean',
             'last_checked_at' => 'nullable|date',
         ];
@@ -44,10 +43,7 @@ class UpdateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $currency = $this->input('currency');
-
         $this->merge([
-            'currency' => is_string($currency) ? strtoupper($currency) : $currency,
             'is_available' => $this->boolean('is_available'),
         ]);
     }
