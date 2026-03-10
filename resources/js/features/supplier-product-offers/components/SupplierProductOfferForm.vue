@@ -15,6 +15,10 @@
     } from '@/components/ui/field';
     import { Input } from '@/components/ui/input';
     import {
+        RadioGroup,
+        RadioGroupItem,
+    } from '@/components/ui/radio-group';
+    import {
         Select,
         SelectContent,
         SelectGroup,
@@ -71,8 +75,41 @@
     const retailPrice = ref<number | undefined>(
         props.supplierProductOffer ? Number(props.supplierProductOffer.retail_price) : undefined
     );
+    const pricingSource = ref<'retail' | 'profit'>('retail');
+    const isAvailable = ref<string>(
+        props.supplierProductOffer ? (props.supplierProductOffer.is_available ? '1' : '0') : '1'
+    );
+
+    const toNumberOrUndefined = (value: string | number): number | undefined => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+    };
+
+    const handleProfitInput = (value: string | number) => {
+        pricingSource.value = 'profit';
+        profitPercentage.value = toNumberOrUndefined(value);
+    };
+
+    const handleRetailInput = (value: string | number) => {
+        pricingSource.value = 'retail';
+        retailPrice.value = toNumberOrUndefined(value);
+    };
 
     const selectedCurrency = computed(() => selectedSupplier.value?.currency ?? 'USD');
+    const currentLastCheckedAt = computed(() => {
+        if (!props.supplierProductOffer?.last_checked_at) return 'Will be set when created';
+
+        const parsed = new Date(props.supplierProductOffer.last_checked_at);
+        if (Number.isNaN(parsed.getTime())) return 'N/A';
+
+        return parsed.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    });
 
     const rawRetailPrice = computed(() => {
         if (
@@ -86,14 +123,14 @@
         return ((baseCost.value + estimatedShipping.value) * (1 + tax.value)) + (courierFee.value * productWeight.value);
     });
 
-    const finalRetailPrice = computed(() => {
-        if (rawRetailPrice.value === undefined || profitPercentage.value === undefined) return undefined;
-        return rawRetailPrice.value * (1 + profitPercentage.value);
-    });
-
     const formatMoney = (value: number | undefined): string => {
         if (value === undefined || Number.isNaN(value)) return 'N/A';
         return Number(value).toFixed(2);
+    };
+
+    const formatPercent = (value: number | undefined): string => {
+        if (value === undefined || Number.isNaN(value)) return 'N/A';
+        return `${(value * 100).toFixed(2)}%`;
     };
 
     watch(selectedSupplier, (supplier) => {
@@ -110,8 +147,24 @@
         }
     }, { immediate: true });
 
-    watch(finalRetailPrice, (value) => {
-        retailPrice.value = value !== undefined ? Number(value.toFixed(2)) : undefined;
+    watch([rawRetailPrice, profitPercentage], ([raw, margin]) => {
+        if (pricingSource.value !== 'profit') return;
+        if (raw === undefined || margin === undefined) {
+            retailPrice.value = undefined;
+            return;
+        }
+
+        retailPrice.value = Number((raw * (1 + margin)).toFixed(2));
+    }, { immediate: true });
+
+    watch([rawRetailPrice, retailPrice], ([raw, retail]) => {
+        if (pricingSource.value !== 'retail') return;
+        if (raw === undefined || retail === undefined || raw <= 0) {
+            profitPercentage.value = undefined;
+            return;
+        }
+
+        profitPercentage.value = Number(((retail / raw) - 1).toFixed(4));
     }, { immediate: true });
 
 </script>
@@ -226,28 +279,74 @@
                                     <Field>
                                         <FieldLabel for="profit_percentage">Profit Percentage</FieldLabel>
                                         <Input id="profit_percentage" name="profit_percentage" type="number" min="0"
-                                            max="1" step="0.0001" v-model="profitPercentage" />
-                                        <FieldDescription>Profit percentage desirable for this product written as
-                                            decimal</FieldDescription>
+                                            max="1" step="0.0001" :model-value="profitPercentage"
+                                            @update:model-value="handleProfitInput" />
+                                        <FieldDescription>Editable. If you change this value, retail price is
+                                            recalculated.</FieldDescription>
                                     </Field>
                                     <Field>
                                         <FieldLabel for="retail_price">Retail Price</FieldLabel>
                                         <Input id="retail_price" name="retail_price" type="number" step="0.01"
-                                            v-model="retailPrice" readonly />
-                                        <FieldDescription>Calculated retail price of the product calculated
+                                            :model-value="retailPrice"
+                                            @update:model-value="handleRetailInput" />
+                                        <FieldDescription>Enter your target retail price (for example: 175.00).
                                         </FieldDescription>
                                     </Field>
                                     <Field>
                                         <div class="rounded-md border p-3 text-sm space-y-1">
-                                            <p><strong>Raw (no profit):</strong> {{ selectedCurrency }} {{
+                                            <p><strong>Original Cost (Raw):</strong> {{ selectedCurrency }} {{
                                                 formatMoney(rawRetailPrice) }}</p>
                                             <p><strong>Final (with profit):</strong> {{ selectedCurrency }} {{
-                                                formatMoney(finalRetailPrice) }}</p>
+                                                formatMoney(retailPrice) }}</p>
+                                            <p><strong>Derived Profit Margin:</strong> {{ formatPercent(profitPercentage)
+                                            }}</p>
+                                            <p><strong>Total Profit:</strong> {{ selectedCurrency }} {{
+                                                formatMoney((retailPrice ?? 0) - (rawRetailPrice ?? 0)) }}</p>
                                             <p class="text-muted-foreground">
-                                                Formula: ((base_cost + estimated_shipping) * tax) + (courier_fee *
-                                                product_weight), then + profit%.
+                                                Raw formula: ((base_cost + estimated_shipping) * (1 + tax)) + (courier_fee *
+                                                product_weight). Profit is derived from your target retail price.
                                             </p>
                                         </div>
+                                    </Field>
+                                </FieldGroup>
+                            </FieldSet>
+                            <FieldSeparator />
+                            <FieldSet>
+                                <FieldLegend>Availability</FieldLegend>
+                                <FieldDescription>
+                                    Update availability status. Last checked time is managed automatically by the system.
+                                </FieldDescription>
+                                <FieldGroup>
+                                    <Field>
+                                        <FieldLabel>Is Available *</FieldLabel>
+                                        <InputError :message="errors.is_available" />
+                                        <RadioGroup name="is_available" v-model="isAvailable">
+                                            <Field>
+                                                <div class="flex items-center space-x-2">
+                                                    <RadioGroupItem id="is-available-yes" value="1"
+                                                        :disabled="processing" />
+                                                    <FieldLabel for="is-available-yes" class="text-sm">Available
+                                                    </FieldLabel>
+                                                </div>
+                                            </Field>
+                                            <Field>
+                                                <div class="flex items-center space-x-2">
+                                                    <RadioGroupItem id="is-available-no" value="0"
+                                                        :disabled="processing" />
+                                                    <FieldLabel for="is-available-no" class="text-sm">Unavailable
+                                                    </FieldLabel>
+                                                </div>
+                                            </Field>
+                                        </RadioGroup>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Last Checked At</FieldLabel>
+                                        <div class="text-sm text-muted-foreground">
+                                            {{ currentLastCheckedAt }}
+                                        </div>
+                                        <FieldDescription>
+                                            On create it uses current timestamp. On update it changes only if availability changes.
+                                        </FieldDescription>
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>

@@ -65,6 +65,8 @@ class SupplierProductOfferController extends Controller
     public function store(StoreRequest $request)
     {
         $validated = $request->validated();
+        $validated['is_available'] = $validated['is_available'] ?? true;
+        $validated['last_checked_at'] = now();
 
         SupplierProductOffer::create($validated);
 
@@ -110,6 +112,12 @@ class SupplierProductOfferController extends Controller
     public function update(UpdateRequest $request, SupplierProductOffer $supplierProductOffer)
     {
         $validated = $request->validated();
+        $newAvailability = (bool) $validated['is_available'];
+        $oldAvailability = (bool) $supplierProductOffer->is_available;
+
+        if ($newAvailability !== $oldAvailability) {
+            $validated['last_checked_at'] = now();
+        }
 
         $supplierProductOffer->update($validated);
 

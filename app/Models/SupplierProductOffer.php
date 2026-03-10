@@ -11,10 +11,9 @@ class SupplierProductOffer extends Model
         'supplier_id',
         'product_id',
         'base_cost',
-        'currency',
-        'estimated_tax',
-        'estimated_shipping',
-        'other_fees',
+        'priority',
+        'retail_price',
+        'profit_percentage',
         'is_available',
         'last_checked_at',
     ];

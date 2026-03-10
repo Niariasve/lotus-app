@@ -35,8 +35,7 @@ class StoreRequest extends FormRequest
             'base_cost' => 'required|decimal:0,2|min:0|max:99999999.99',
             'retail_price' => 'required|decimal:0,2|min:0|max:99999999.99',
             'profit_percentage' => 'required|decimal:0,4|min:0|max:1',
-            'is_available' => 'sometimes|boolean',
-            'last_checked_at' => 'nullable|date',
+            'is_available' => 'required|boolean',
         ];
     }
 
