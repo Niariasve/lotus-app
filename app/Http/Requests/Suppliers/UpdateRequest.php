@@ -26,18 +26,18 @@ class UpdateRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
+                'min:3',
                 'max:150',
                 Rule::unique('suppliers', 'name')->ignore($this->route('supplier')->id),
             ],
             'description' => 'nullable|string',
-            'priority' => 'sometimes|integer|min:0',
             'tax_policy' => 'required|decimal:0,4|min:0|max:1',
-            'shipping_policy' => 'required|decimal:0,4|min:0|max:1',
+            'estimated_shipping' => 'required|decimal:0,2|min:0|max:999999.99',
             'currency' => [
                 'required',
                 'string',
                 'size:3',
-                Rule::in(['USD', 'EUR']),
+                Rule::in(['USD', 'EUR', 'JPY']),
             ],
         ];
     }

@@ -2,8 +2,7 @@ export interface Supplier {
     id: number,
     name: string,
     description: string,
-    priority: number,
     tax_policy: number,
-    shipping_policy: number,
+    estimated_shipping: number,
     currency: string,
 }

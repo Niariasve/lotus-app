@@ -20,24 +20,19 @@ export const columns: ColumnDef<Supplier>[] = [
         }
     },
     {
-        accessorKey: 'priority',
-        header: ({ column }) => {
-            return h(DataTableColumnHeader<Supplier>, {
-                column: column,
-                title: 'Priority',
-            })
-        }
-    },
-    {
         accessorKey: 'tax_policy',
         header: 'Tax Policy',
         cell: ({ row }) => trimDecimal(row.original.tax_policy)
 
     },
     {
-        accessorKey: 'shipping_policy',
-        header: 'Shipping Policy',
-        cell: ({ row }) => trimDecimal(row.original.shipping_policy)
+        accessorKey: 'estimated_shipping',
+        header: 'Estimated Shipping Cost',
+        cell: ({ row }) => trimDecimal(row.original.estimated_shipping)
+    },
+    {
+        accessorKey: 'currency',
+        header: 'Currency',
     },
     {
         id: 'actions',
