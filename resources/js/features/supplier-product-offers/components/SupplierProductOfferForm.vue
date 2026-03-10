@@ -34,7 +34,7 @@
         products: Product[],
     }>();
 
-    const WEIGHTFEE: number = 8.75;
+    const DEFAULT_COURIER_FEE = 8.75;
 
     const controller = () => {
         if (!props.supplierProductOffer) return SupplierProductOfferController.store.form();
@@ -49,11 +49,9 @@
         props.suppliers.find((s) => s.id === supplierId.value)
     );
 
-
-    const estimatedShipping = ref<number | undefined>();
-    const tax = ref<number | undefined>();
-    const productWeight = ref<number | undefined>();
-
+    const estimatedShipping = ref<number | undefined>(undefined);
+    const tax = ref<number | undefined>(undefined);
+    const productWeight = ref<number | undefined>(undefined);
 
     const productId = ref<number | null>(
         props.supplierProductOffer ? props.supplierProductOffer.product_id : null
@@ -63,19 +61,58 @@
         props.products.find((p) => p.id === productId.value)
     );
 
+    const baseCost = ref<number | undefined>(
+        props.supplierProductOffer ? Number(props.supplierProductOffer.base_cost) : undefined
+    );
+    const courierFee = ref<number>(DEFAULT_COURIER_FEE);
+    const profitPercentage = ref<number | undefined>(
+        props.supplierProductOffer ? Number(props.supplierProductOffer.profit_percentage) : undefined
+    );
+    const retailPrice = ref<number | undefined>(
+        props.supplierProductOffer ? Number(props.supplierProductOffer.retail_price) : undefined
+    );
+
+    const selectedCurrency = computed(() => selectedSupplier.value?.currency ?? 'USD');
+
+    const rawRetailPrice = computed(() => {
+        if (
+            baseCost.value === undefined ||
+            estimatedShipping.value === undefined ||
+            tax.value === undefined ||
+            productWeight.value === undefined
+        ) return undefined;
+
+
+        return ((baseCost.value + estimatedShipping.value) * (1 + tax.value)) + (courierFee.value * productWeight.value);
+    });
+
+    const finalRetailPrice = computed(() => {
+        if (rawRetailPrice.value === undefined || profitPercentage.value === undefined) return undefined;
+        return rawRetailPrice.value * (1 + profitPercentage.value);
+    });
+
+    const formatMoney = (value: number | undefined): string => {
+        if (value === undefined || Number.isNaN(value)) return 'N/A';
+        return Number(value).toFixed(2);
+    };
+
     watch(selectedSupplier, (supplier) => {
         if (supplier) {
-            estimatedShipping.value = supplier.estimated_shipping
+            estimatedShipping.value = Number(supplier.estimated_shipping);
             tax.value = trimDecimal(supplier.tax_policy) as number;
         }
-    });
+    }, { immediate: true });
 
     watch(selectedProduct, (product) => {
         if (product) {
             const weightValue = (product.weight_real ? product.weight_real : product.weight_est) ?? 0;
             productWeight.value = trimDecimal(weightValue) as number;
         }
-    });
+    }, { immediate: true });
+
+    watch(finalRetailPrice, (value) => {
+        retailPrice.value = value !== undefined ? Number(value.toFixed(2)) : undefined;
+    }, { immediate: true });
 
 </script>
 
@@ -139,7 +176,7 @@
                                     <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
                                     <p><strong>Height:</strong> {{ trimDecimal(selectedProduct.height) || 'N/A' }}</p>
                                     <p><strong>Est. Weight:</strong> {{ trimDecimal(selectedProduct.weight_est) || 'N/A'
-                                    }}</p>
+                                        }}</p>
                                     <p><strong>Real Weight:</strong> {{ trimDecimal(selectedProduct.weight_real) ||
                                         'N/A' }}</p>
                                 </div>
@@ -160,41 +197,57 @@
 
                                 <FieldGroup>
                                     <Field>
-                                        <FieldLabel for="base_cost">Base Cost *</FieldLabel>
-                                        <Input id="base_cost" name="base_cost"
-                                            :default-value="supplierProductOffer?.base_cost" placeholder="75" />
-                                    </Field>
-                                    <Field>
                                         <FieldLabel for="estimated_shipping">Estimated Shipping</FieldLabel>
-                                        <Input id="estimated_shipping" v-model="estimatedShipping"
-                                            disabled />
+                                        <Input id="estimated_shipping" v-model="estimatedShipping" readonly />
                                         <FieldDescription>Estimated shipping cost from supplier</FieldDescription>
                                     </Field>
                                     <Field>
-                                        <FieldLabel for="tax">Estimated Shipping</FieldLabel>
-                                        <Input id="tax"  v-model="tax" disabled />
+                                        <FieldLabel for="tax">Tax Policy</FieldLabel>
+                                        <Input id="tax" v-model="tax" readonly />
                                         <FieldDescription>Tax policy from supplier</FieldDescription>
                                     </Field>
                                     <Field>
                                         <FieldLabel for="product_weight">Product Weight (lbs.)</FieldLabel>
-                                        <Input id="product_weight" v-model="productWeight" disabled />
+                                        <Input id="product_weight" v-model="productWeight" readonly />
                                         <FieldDescription>Estimated or real weight of the product according to which
                                             value is available</FieldDescription>
                                     </Field>
                                     <Field>
-                                        <FieldLabel for="product_weight">Courier's Weight Fee</FieldLabel>
-                                        <Input id="product_weight" :default-value="WEIGHTFEE" />
+                                        <FieldLabel for="courier_fee">Courier's Weight Fee</FieldLabel>
+                                        <Input id="courier_fee" type="number" min="0" step="0.01"
+                                            v-model="courierFee" />
                                         <FieldDescription>Courier's weight fee</FieldDescription>
                                     </Field>
                                     <Field>
+                                        <FieldLabel for="base_cost">Base Cost *</FieldLabel>
+                                        <Input id="base_cost" name="base_cost" type="number" min="0" step="0.01"
+                                            v-model="baseCost" placeholder="75" />
+                                    </Field>
+                                    <Field>
                                         <FieldLabel for="profit_percentage">Profit Percentage</FieldLabel>
-                                        <Input id="profit_percentage" type="number" min="0" max="1" step="0.0001" />
-                                        <FieldDescription>Profit percentage desirable for this product written as decimal</FieldDescription>
+                                        <Input id="profit_percentage" name="profit_percentage" type="number" min="0"
+                                            max="1" step="0.0001" v-model="profitPercentage" />
+                                        <FieldDescription>Profit percentage desirable for this product written as
+                                            decimal</FieldDescription>
                                     </Field>
                                     <Field>
                                         <FieldLabel for="retail_price">Retail Price</FieldLabel>
-                                        <Input id="retail_price" name="retail_price" />
-                                        <FieldDescription>Calculated retail price of the product calculated</FieldDescription>
+                                        <Input id="retail_price" name="retail_price" type="number" step="0.01"
+                                            v-model="retailPrice" readonly />
+                                        <FieldDescription>Calculated retail price of the product calculated
+                                        </FieldDescription>
+                                    </Field>
+                                    <Field>
+                                        <div class="rounded-md border p-3 text-sm space-y-1">
+                                            <p><strong>Raw (no profit):</strong> {{ selectedCurrency }} {{
+                                                formatMoney(rawRetailPrice) }}</p>
+                                            <p><strong>Final (with profit):</strong> {{ selectedCurrency }} {{
+                                                formatMoney(finalRetailPrice) }}</p>
+                                            <p class="text-muted-foreground">
+                                                Formula: ((base_cost + estimated_shipping) * tax) + (courier_fee *
+                                                product_weight), then + profit%.
+                                            </p>
+                                        </div>
                                     </Field>
                                 </FieldGroup>
                             </FieldSet>
