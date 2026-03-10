@@ -53,13 +53,6 @@
                                     :default-value="supplier?.description" :disabled="processing" />
                                 <InputError :message="errors.description" />
                             </Field>
-                            <Field>
-                                <FieldLabel for="priority">Priority</FieldLabel>
-                                <Input id="priority" name="priority" type="number" min="0"
-                                    :default-value="supplier?.priority ?? 100" :disabled="processing" />
-                                <FieldDescription>Lower value means higher priority</FieldDescription>
-                                <InputError :message="errors.priority" />
-                            </Field>
                         </FieldGroup>
                     </FieldSet>
                     <FieldSeparator />
@@ -75,12 +68,12 @@
                                 <InputError :message="errors.tax_policy" />
                             </Field>
                             <Field>
-                                <FieldLabel for="shipping_policy">Shipping Policy *</FieldLabel>
-                                <Input id="shipping_policy" name="shipping_policy" type="number" min="0" max="1"
-                                    step="0.0001" :default-value="supplier?.shipping_policy ?? 0"
+                                <FieldLabel for="estimated_shipping">Estimated Shipping Cost *</FieldLabel>
+                                <Input id="estimated_shipping" name="estimated_shipping" type="number" min="0" max="999999.99"
+                                    step="0.01" :default-value="supplier?.estimated_shipping ?? 0"
                                     :disabled="processing" required />
-                                <FieldDescription>Value between 0 and 1 (up to 4 decimals)</FieldDescription>
-                                <InputError :message="errors.shipping_policy" />
+                                <FieldDescription>Estimated shipping value for this supplier</FieldDescription>
+                                <InputError :message="errors.estimated_shipping" />
                             </Field>
                             <Field>
                                 <FieldLabel>Currency *</FieldLabel>
@@ -96,6 +89,12 @@
                                         <div class="flex items-center space-x-2">
                                             <RadioGroupItem id="currency-eur" value="EUR" :disabled="processing" />
                                             <FieldLabel for="currency-eur" class="text-sm">EUR</FieldLabel>
+                                        </div>
+                                    </Field>
+                                    <Field>
+                                        <div class="flex items-center space-x-2">
+                                            <RadioGroupItem id="currency-jpy" value="JPY" :disabled="processing" />
+                                            <FieldLabel for="currency-jpy" class="text-sm">JPY</FieldLabel>
                                         </div>
                                     </Field>
                                 </RadioGroup>

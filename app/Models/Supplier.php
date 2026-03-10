@@ -9,9 +9,8 @@ class Supplier extends Model
     protected $fillable = [
         'name',
         'description',
-        'priority',
         'tax_policy',
-        'shipping_policy',
+        'estimated_shipping',
         'currency',
     ];
 }
