@@ -29,12 +29,12 @@ class SupplierProductOfferController extends Controller
                 'last_checked_at',
             ])
             ->with([
-                'supplier:id,name,currency',
+                'supplier:id,name,currency,tax_policy,estimated_shipping',
                 'product:id,name,height,weight_est,weight_real',
             ])
             ->latest('id')
             ->get();
-
+   
         return Inertia::render('supplierProductOffer/Index', [
             'supplierProductOffers' => $supplierProductOffers,
         ]);

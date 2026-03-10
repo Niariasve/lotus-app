@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { Form, router } from '@inertiajs/vue3';
-    import { computed, ref } from 'vue';
+    import { computed, ref, watch } from 'vue';
     import SupplierProductOfferController from '@/actions/App/Http/Controllers/SupplierProductOfferController';
     import InputError from '@/components/InputError.vue';
     import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@
         SelectValue,
     } from '@/components/ui/select';
     import { Spinner } from '@/components/ui/spinner';
+    import { trimDecimal } from '@/lib/utils';
     import supplierProductOfferRoutes from '@/routes/supplier-product-offer';
     import { type Product, type Supplier, type SupplierProductOffer } from '@/types';
 
@@ -32,6 +33,8 @@
         suppliers: Supplier[],
         products: Product[],
     }>();
+
+    const WEIGHTFEE: number = 8.75;
 
     const controller = () => {
         if (!props.supplierProductOffer) return SupplierProductOfferController.store.form();
@@ -42,17 +45,37 @@
         props.supplierProductOffer ? props.supplierProductOffer.supplier_id : null
     );
 
-    const selectedSupplier = computed(() => 
+    const selectedSupplier = computed(() =>
         props.suppliers.find((s) => s.id === supplierId.value)
     );
+
+
+    const estimatedShipping = ref<number | undefined>();
+    const tax = ref<number | undefined>();
+    const productWeight = ref<number | undefined>();
+
 
     const productId = ref<number | null>(
         props.supplierProductOffer ? props.supplierProductOffer.product_id : null
     );
 
-    const selectedProduct = computed(() => 
+    const selectedProduct = computed(() =>
         props.products.find((p) => p.id === productId.value)
     );
+
+    watch(selectedSupplier, (supplier) => {
+        if (supplier) {
+            estimatedShipping.value = supplier.estimated_shipping
+            tax.value = trimDecimal(supplier.tax_policy) as number;
+        }
+    });
+
+    watch(selectedProduct, (product) => {
+        if (product) {
+            const weightValue = (product.weight_real ? product.weight_real : product.weight_est) ?? 0;
+            productWeight.value = trimDecimal(weightValue) as number;
+        }
+    });
 
 </script>
 
@@ -85,7 +108,10 @@
                                 <InputError :message="errors.supplier_id" />
 
                                 <div v-if="selectedSupplier" class="rounded-md border p-3 text-sm">
-
+                                    <p><strong>Name:</strong> {{ selectedSupplier.name }}</p>
+                                    <p><strong>Currency:</strong> {{ selectedSupplier.currency }}</p>
+                                    <p><strong>Tax Policy:</strong> {{ trimDecimal(selectedSupplier.tax_policy) }}</p>
+                                    <p><strong>Est. Shipping:</strong> {{ selectedSupplier.estimated_shipping }}</p>
                                 </div>
                             </Field>
 
@@ -111,9 +137,11 @@
                                 <div v-if="selectedProduct" class="rounded-md border p-3 text-sm">
                                     <p><strong>SKU:</strong> {{ selectedProduct.sku }}</p>
                                     <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
-                                    <p><strong>Height:</strong> {{ selectedProduct.height || 'N/A' }}</p>
-                                    <p><strong>Est. Weight:</strong> {{ selectedProduct.weight_est || 'N/A' }}</p>
-                                    <p><strong>Real Weight:</strong> {{ selectedProduct.weight_real || 'N/A' }}</p>
+                                    <p><strong>Height:</strong> {{ trimDecimal(selectedProduct.height) || 'N/A' }}</p>
+                                    <p><strong>Est. Weight:</strong> {{ trimDecimal(selectedProduct.weight_est) || 'N/A'
+                                    }}</p>
+                                    <p><strong>Real Weight:</strong> {{ trimDecimal(selectedProduct.weight_real) ||
+                                        'N/A' }}</p>
                                 </div>
                             </Field>
 
@@ -127,6 +155,48 @@
                         <FieldGroup>
                             <FieldSet>
                                 <FieldLegend>Retail Price Calculator</FieldLegend>
+                                <FieldDescription>Calculate the retail price of this product for this supplier
+                                </FieldDescription>
+
+                                <FieldGroup>
+                                    <Field>
+                                        <FieldLabel for="base_cost">Base Cost *</FieldLabel>
+                                        <Input id="base_cost" name="base_cost"
+                                            :default-value="supplierProductOffer?.base_cost" placeholder="75" />
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="estimated_shipping">Estimated Shipping</FieldLabel>
+                                        <Input id="estimated_shipping" v-model="estimatedShipping"
+                                            disabled />
+                                        <FieldDescription>Estimated shipping cost from supplier</FieldDescription>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="tax">Estimated Shipping</FieldLabel>
+                                        <Input id="tax"  v-model="tax" disabled />
+                                        <FieldDescription>Tax policy from supplier</FieldDescription>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="product_weight">Product Weight (lbs.)</FieldLabel>
+                                        <Input id="product_weight" v-model="productWeight" disabled />
+                                        <FieldDescription>Estimated or real weight of the product according to which
+                                            value is available</FieldDescription>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="product_weight">Courier's Weight Fee</FieldLabel>
+                                        <Input id="product_weight" :default-value="WEIGHTFEE" />
+                                        <FieldDescription>Courier's weight fee</FieldDescription>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="profit_percentage">Profit Percentage</FieldLabel>
+                                        <Input id="profit_percentage" type="number" min="0" max="1" step="0.0001" />
+                                        <FieldDescription>Profit percentage desirable for this product written as decimal</FieldDescription>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="retail_price">Retail Price</FieldLabel>
+                                        <Input id="retail_price" name="retail_price" />
+                                        <FieldDescription>Calculated retail price of the product calculated</FieldDescription>
+                                    </Field>
+                                </FieldGroup>
                             </FieldSet>
                         </FieldGroup>
                     </FieldSet>
