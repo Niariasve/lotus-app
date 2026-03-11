@@ -92,11 +92,11 @@ class SupplierProductOfferController extends Controller
     public function edit(SupplierProductOffer $supplierProductOffer)
     {
         $suppliers = Supplier::query()
-            ->orderBy('name')
+            ->where('id', $supplierProductOffer->supplier->id)
             ->get();
 
         $products = Product::query()
-            ->orderBy('name')
+            ->where('id', $supplierProductOffer->product->id)
             ->get();
 
         return Inertia::render('supplierProductOffer/Edit', [

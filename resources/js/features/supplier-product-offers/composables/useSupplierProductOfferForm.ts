@@ -14,7 +14,7 @@ type Props = {
 export const useSupplierProductOfferForm = (props: Props) => {
     const controller = () => {
         if (!props.supplierProductOffer) return SupplierProductOfferController.store.form();
-        return SupplierProductOfferController.edit.form(props.supplierProductOffer!.id);
+        return SupplierProductOfferController.update.form(props.supplierProductOffer!.id);
     }
 
     const supplierId = ref<number | null>(

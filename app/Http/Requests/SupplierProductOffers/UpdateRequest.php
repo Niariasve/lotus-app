@@ -23,16 +23,7 @@ class UpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supplier_id' => 'required|integer|exists:suppliers,id',
-            'product_id' => [
-                'required',
-                'integer',
-                'exists:products,id',
-                Rule::unique('supplier_product_offers', 'product_id')
-                    ->ignore($this->route('supplier_product_offer')->id)
-                    ->where(fn ($query) => $query->where('supplier_id', $this->input('supplier_id'))),
-            ],
-            'priority' => 'sometimes|integer|min:0',
+            'priority' => 'required|integer|min:0',
             'base_cost' => 'required|decimal:0,2|min:0|max:99999999.99',
             'retail_price' => 'required|decimal:0,2|min:0|max:99999999.99',
             'profit_percentage' => 'required|decimal:0,4|min:0|max:1',
@@ -42,7 +33,11 @@ class UpdateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $offer = $this->route('supplier_product_offer');
+
         $this->merge([
+            'supplier_id' => $offer->supplier_id,
+            'product_id' => $offer->product_id,
             'is_available' => $this->boolean('is_available'),
         ]);
     }
