@@ -13,3 +13,11 @@ export interface SupplierProductOffer {
     supplier?: Supplier | null,
     product?: Product | null,
 }
+
+export type RawRetailPriceParams = {
+    baseCost?: number;
+    estimatedShipping?: number,
+    tax?: number,
+    productWeight?: number,
+    courierFee?: number,
+}

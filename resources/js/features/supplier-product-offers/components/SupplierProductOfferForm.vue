@@ -31,6 +31,8 @@
     import { trimDecimal } from '@/lib/utils';
     import supplierProductOfferRoutes from '@/routes/supplier-product-offer';
     import { type Product, type Supplier, type SupplierProductOffer } from '@/types';
+    import { DEFAULT_COURIER_FEE } from '../constants';
+    import { toNumberOrUndefined, formatMoney, formatPercent } from '../lib/utils';
 
     const props = defineProps<{
         supplierProductOffer?: SupplierProductOffer,
@@ -38,7 +40,6 @@
         products: Product[],
     }>();
 
-    const DEFAULT_COURIER_FEE = 8.75;
 
     const controller = () => {
         if (!props.supplierProductOffer) return SupplierProductOfferController.store.form();
@@ -80,10 +81,7 @@
         props.supplierProductOffer ? (props.supplierProductOffer.is_available ? '1' : '0') : '1'
     );
 
-    const toNumberOrUndefined = (value: string | number): number | undefined => {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : undefined;
-    };
+    
 
     const handleProfitInput = (value: string | number) => {
         pricingSource.value = 'profit';
@@ -122,16 +120,6 @@
 
         return ((baseCost.value + estimatedShipping.value) * (1 + tax.value)) + (courierFee.value * productWeight.value);
     });
-
-    const formatMoney = (value: number | undefined): string => {
-        if (value === undefined || Number.isNaN(value)) return 'N/A';
-        return Number(value).toFixed(2);
-    };
-
-    const formatPercent = (value: number | undefined): string => {
-        if (value === undefined || Number.isNaN(value)) return 'N/A';
-        return `${(value * 100).toFixed(2)}%`;
-    };
 
     watch(selectedSupplier, (supplier) => {
         if (supplier) {

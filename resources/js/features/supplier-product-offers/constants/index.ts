@@ -1,0 +1,1 @@
+export const DEFAULT_COURIER_FEE = 8.75;
