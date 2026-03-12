@@ -1,8 +1,8 @@
 <script setup lang="ts">
     import { Link, router } from '@inertiajs/vue3';
-    import { MoreHorizontal, LoaderCircle, Trash2, Pencil } from 'lucide-vue-next';
+    import { MoreHorizontal, LoaderCircle, Trash2, Pencil, RefreshCw } from 'lucide-vue-next';
     import { ref } from 'vue';
-    import { destroy, edit } from '@/actions/App/Http/Controllers/SupplierProductOfferController';
+    import { destroy, edit, toggleAvailability } from '@/actions/App/Http/Controllers/SupplierProductOfferController';
     import {
         AlertDialog,
         AlertDialogAction,
@@ -30,6 +30,17 @@
 
     const openDeleteAlert = ref(false);
     const processing = ref(false);
+
+    const handleToggleAvailability = () => {
+        processing.value = true;
+
+        router.patch(toggleAvailability(props.supplierProductOffer.id), {}, {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+            },
+        });
+    };
 
     const handleDelete = () => {
         processing.value = true;
@@ -59,6 +70,10 @@
                 Edit
             </DropdownMenuItem>
             </Link>
+            <DropdownMenuItem :disabled="processing" @click="handleToggleAvailability">
+                <RefreshCw class="h-4 w-4" />
+                {{ supplierProductOffer.is_available ? 'Mark as Unavailable' : 'Mark as Available' }}
+            </DropdownMenuItem>
             <DropdownMenuItem class="text-destructive" @click="openDeleteAlert = true">
                 <Trash2 class="h-4 w-4 text-destructive" />
                 Delete

@@ -24,17 +24,17 @@ Route::middleware(['auth'])->group(function () {
         ->except(['show']);
 });
 
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::resource('contact-platforms', ContactPlatformController::class)
         ->except(['show']);
 });
 
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class)
         ->except(['show']);
 });
 
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::resource('suppliers', SupplierController::class)
         ->except(['show']);
 });
@@ -42,6 +42,9 @@ Route::middleware(['auth'])->group(function() {
 Route::middleware(['auth'])->group(function () {
     Route::resource('supplier-product-offer', SupplierProductOfferController::class)
         ->except(['show']);
+
+    Route::patch('/supplier-product-offer/{supplier_product_offer}/availability', [SupplierProductOfferController::class, 'toggleAvailability'])
+        ->name('supplier-product-offer.availability');
 });
 
 require __DIR__ . '/settings.php';

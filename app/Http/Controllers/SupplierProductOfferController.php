@@ -135,4 +135,21 @@ class SupplierProductOfferController extends Controller
 
         return back();
     }
+
+    /**
+     * Toggle the supplier's product offer availability
+     */
+    public function toggleAvailability(SupplierProductOffer $supplierProductOffer) {
+        $supplierProductOffer->update([
+            'is_available' => !$supplierProductOffer->is_available,
+            'last_checked_at' => now(),
+        ]);
+
+        Inertia::flash([
+            'type' => 'success',
+            'message' => 'Availability updated for offer with id ' . $supplierProductOffer->id,
+        ]);
+
+        return back();
+    }
 }
