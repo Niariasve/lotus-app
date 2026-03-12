@@ -40,7 +40,8 @@ Route::middleware(['auth'])->group(function() {
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::resource('supplier-product-offer', SupplierProductOfferController::class);
+    Route::resource('supplier-product-offer', SupplierProductOfferController::class)
+        ->except(['show']);
 });
 
 require __DIR__ . '/settings.php';

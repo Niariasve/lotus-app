@@ -24,12 +24,17 @@ class StoreRequest extends FormRequest
     {
         return [
             'supplier_id' => 'required|integer|exists:suppliers,id',
-            'product_id' => [
+            'product_id' => 'required|integer|exists:products,id',
+            'priority' => [
                 'required',
                 'integer',
-                'exists:products,id',
-                Rule::unique('supplier_product_offers', 'product_id')
-                    ->where(fn ($query) => $query->where('supplier_id', $this->input('supplier_id'))),
+                'min:0',
+                Rule::unique('supplier_product_offers')
+                    ->where(
+                        fn($query) => $query
+                            ->where('supplier_id', $this->input('supplier_id'))
+                            ->where('product_id', $this->input('product_id'))
+                    ),
             ],
             'priority' => 'required|integer|min:0',
             'base_cost' => 'required|decimal:0,2|min:0|max:99999999.99',

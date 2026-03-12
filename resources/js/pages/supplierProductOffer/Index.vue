@@ -39,7 +39,6 @@
             <DataTable :columns="columns" :data="supplierProductOffers" :filterable-columns="[
                 { value: 'supplier', label: 'Supplier' },
                 { value: 'product', label: 'Product' },
-                { value: 'currency', label: 'Currency' },
                 { value: 'availability', label: 'Availability' },
             ]" />
         </div>

@@ -79,14 +79,6 @@ class SupplierProductOfferController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(SupplierProductOffer $supplierProductOffer)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(SupplierProductOffer $supplierProductOffer)
