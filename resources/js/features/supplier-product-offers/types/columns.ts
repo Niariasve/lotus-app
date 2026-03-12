@@ -50,6 +50,10 @@ export const columns: ColumnDef<SupplierProductOffer>[] = [
         }
     },
     {
+        accessorKey: 'priority',
+        header: 'Priority',
+    },
+    {
         id: 'availability',
         accessorFn: (supplierProductOffer) => (supplierProductOffer.is_available ? 'Available' : 'Unavailable'),
         header: ({ column }) => {
