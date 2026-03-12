@@ -14,6 +14,7 @@ class SupplierProductOffer extends Model
         'priority',
         'retail_price',
         'profit_percentage',
+        'url',
         'is_available',
         'last_checked_at',
     ];

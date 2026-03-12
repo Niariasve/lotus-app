@@ -37,6 +37,7 @@ class UpdateRequest extends FormRequest
                     )
                     ->ignore($offer->id),
             ],
+            'url' => 'required|string|url|max:512',
             'base_cost' => 'required|decimal:0,2|min:0|max:99999999.99',
             'retail_price' => 'required|decimal:0,2|min:0|max:99999999.99',
             'profit_percentage' => 'required|decimal:0,4|min:0|max:1',

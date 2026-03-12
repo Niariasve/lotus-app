@@ -49,7 +49,7 @@
 
                     <AvailabilityFormSection :is-available="form.isAvailable.value"
                         :current-last-checked-at="form.currentLastCheckedAt.value" :errors="errors"
-                        @update:is-available="form.isAvailable.value = $event" />
+                        @update:is-available="form.isAvailable.value = $event" :url="form.url.value" />
                 </FieldGroup>
             </div>
             <div class="flex gap-2">

@@ -8,11 +8,13 @@
         FieldLegend,
         FieldSet,
     } from '@/components/ui/field';
+    import { Input } from '@/components/ui/input';
     import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
     defineProps<{
         isAvailable: string,
         currentLastCheckedAt: string,
+        url?: string,
         errors: Record<string, string>
     }>();
 
@@ -29,6 +31,13 @@
         </FieldDescription>
 
         <FieldGroup>
+            <Field>
+                <FieldLabel for="url">Supplier's Product URL</FieldLabel>
+                <FieldDescription>Add the supplier's product URL to check for availability</FieldDescription>
+
+                <Input type="url" id="url" name="url" placeholder="https://supplier.com/product" :model-value="url" />
+                <InputError :message="errors.url" />
+            </Field>
             <Field>
                 <FieldLabel>Is Available *</FieldLabel>
                 <InputError :message="errors.is_available" />
@@ -57,23 +66,23 @@
                         </div>
                     </Field>
                 </RadioGroup>
-
-                <Field>
-
-                    <FieldLabel>
-                        Last Checked At
-                    </FieldLabel>
-
-                    <div class="text-sm text-muted-foreground">
-                        {{ currentLastCheckedAt }}
-                    </div>
-
-                    <FieldDescription>
-                        On create it uses current timestamp. On update it changes only if availability changes.
-                    </FieldDescription>
-
-                </Field>
             </Field>
+
+            <Field>
+                <FieldLabel>
+                    Last Checked At
+                </FieldLabel>
+
+                <div class="text-sm text-muted-foreground">
+                    {{ currentLastCheckedAt }}
+                </div>
+
+                <FieldDescription>
+                    On create it uses current timestamp. On update it changes only if availability changes.
+                </FieldDescription>
+
+            </Field>
+
         </FieldGroup>
     </FieldSet>
 </template>

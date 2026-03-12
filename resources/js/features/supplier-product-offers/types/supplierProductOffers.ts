@@ -8,6 +8,7 @@ export interface SupplierProductOffer {
     base_cost: number | string,
     retail_price: number | string,
     profit_percentage: number,
+    url: string,
     is_available: boolean,
     last_checked_at: string | null,
     supplier?: Supplier | null,

@@ -53,6 +53,10 @@ export const useSupplierProductOfferForm = (props: Props) => {
 
     const pricingSource = ref<'retail' | 'profit'>('retail');
 
+    const url = ref<string | undefined>(
+        props.supplierProductOffer ? props.supplierProductOffer.url : undefined
+    );
+
     const isAvailable = ref<string>(
         props.supplierProductOffer ? (props.supplierProductOffer.is_available ? '1' : '0') : '1'
     );
@@ -126,6 +130,7 @@ export const useSupplierProductOfferForm = (props: Props) => {
         profitPercentage,
         retailPrice,
         pricingSource,
+        url,
         isAvailable,
         selectedCurrency,
         currentLastCheckedAt,
