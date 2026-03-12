@@ -22,8 +22,21 @@ class UpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $offer = $this->route('supplier_product_offer');
+
         return [
-            'priority' => 'required|integer|min:0',
+            'priority' => [
+                'required',
+                'integer',
+                'min:0',
+                Rule::unique('supplier_product_offers', 'priority')
+                    ->where(
+                        fn($query) => $query
+                            ->where('supplier_id', $this->input('supplier_id'))
+                            ->where('product_id', $this->input('product_id'))
+                    )
+                    ->ignore($offer->id),
+            ],
             'base_cost' => 'required|decimal:0,2|min:0|max:99999999.99',
             'retail_price' => 'required|decimal:0,2|min:0|max:99999999.99',
             'profit_percentage' => 'required|decimal:0,4|min:0|max:1',
