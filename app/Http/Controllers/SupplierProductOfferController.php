@@ -31,7 +31,7 @@ class SupplierProductOfferController extends Controller
             ])
             ->with([
                 'supplier:id,name,currency,tax_policy,estimated_shipping',
-                'product:id,name,height,weight_est,weight_real',
+                'product:id,sku,name,height,weight_est,weight_real',
             ])
             ->latest('id')
             ->get();

@@ -40,7 +40,7 @@
                 <input type="hidden" name="supplier_id" :value="supplierId" />
 
                 <FieldLabel>Supplier *</FieldLabel>
-                <Select :model-value="supplierId" @update:model-value="emit('update:supplier-id', $event)">
+                <Select v-if="!supplierProductOffer?.supplier" :model-value="supplierId" @update:model-value="emit('update:supplier-id', $event)">
                     <SelectTrigger class="w-auto">
                         <SelectValue placeholder="Select a Supplier" />
                     </SelectTrigger>
@@ -52,22 +52,22 @@
                             {{ supplier.name }}
                         </SelectItem>
                     </SelectContent>
-
-                    <InputError :message="errors.supplier_id" />
-
-                    <div v-if="selectedSupplier" class="rounded-md border p-3 text-sm">
-                        <p><strong>Name:</strong> {{ selectedSupplier.name }}</p>
-                        <p><strong>Currency:</strong> {{ selectedSupplier.currency }}</p>
-                        <p><strong>Tax Policy:</strong> {{ trimDecimal(selectedSupplier.tax_policy) }}</p>
-                        <p><strong>Est. Shipping:</strong> {{ selectedSupplier.estimated_shipping }}</p>
-                    </div>
                 </Select>
+
+                <InputError :message="errors.supplier_id" />
+                
+                <div v-if="selectedSupplier" class="rounded-md border p-3 text-sm">
+                    <p><strong>Name:</strong> {{ selectedSupplier.name }}</p>
+                    <p><strong>Currency:</strong> {{ selectedSupplier.currency }}</p>
+                    <p><strong>Tax Policy:</strong> {{ trimDecimal(selectedSupplier.tax_policy) }}</p>
+                    <p><strong>Est. Shipping:</strong> {{ selectedSupplier.estimated_shipping }}</p>
+                </div>
             </Field>
 
             <Field>
                 <input type="hidden" name="product_id" :value="productId" />
                 <FieldLabel for="product_id">Product *</FieldLabel>
-                <Select :model-value="productId" @update:model-value="emit('update:product-id', $event)">
+                <Select v-if="!supplierProductOffer?.product" :model-value="productId" @update:model-value="emit('update:product-id', $event)">
                     <SelectTrigger class="w-auto">
                         <SelectValue placeholder="Select a Product" />
                     </SelectTrigger>
