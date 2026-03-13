@@ -2,6 +2,7 @@ import { type ColumnDef } from '@tanstack/vue-table';
 import { h } from 'vue';
 import DataTableColumnHeader from '@/components/ui/data-table/DataTableColumnHeader.vue';
 import { formatDateTime } from '@/lib/utils';
+import CheckAvailabilityButton from '../components/CheckAvailabilityButton.vue';
 import TableDropdown from '../components/SupplierProductOfferDataTableDropdown.vue';
 import { type SupplierProductOffer } from './supplierProductOffers';
 
@@ -63,11 +64,14 @@ export const columns: ColumnDef<SupplierProductOffer>[] = [
             });
         },
         cell: ({ row }) => {
-            if (row.original.is_available) {
-                return h('span', { class: 'font-semibold text-emerald-600' }, 'Available');
-            }
+            const isAvailable = row.original.is_available;
+            const textColor = isAvailable ? 'text-emerald-600' : 'text-destructive';
+            const text = isAvailable ? 'Available' : 'Unavailable';
 
-            return h('span', { class: 'font-semibold text-destructive' }, 'Unavailable');
+            return h('div', { class: 'flex gap-3 items-center' }, [
+                h('span', { class: `font-semibold ${textColor}` }, text),
+                h(CheckAvailabilityButton, { url: row.original.url })
+            ]);
         },
     },
     {

@@ -25,6 +25,7 @@ class SupplierProductOfferController extends Controller
                 'profit_percentage',
                 'priority',
                 'base_cost',
+                'url',
                 'is_available',
                 'last_checked_at',
             ])
