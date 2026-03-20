@@ -27,7 +27,7 @@ class UpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('products', 'sku')->ignore($this->route('product')->id)
+                Rule::unique('products', 'sku')->ignore($this->route('product')->id),
             ],
             'name' => 'required|string|max:200',
             'description' => 'nullable|string',
@@ -36,7 +36,7 @@ class UpdateRequest extends FormRequest
             'height' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
             'weight_est' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
             'weight_real' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
-            'release_date' => 'nullable|date'
+            'release_date' => 'nullable|date',
         ];
     }
 }

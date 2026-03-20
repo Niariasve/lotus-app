@@ -29,8 +29,7 @@ class StoreRequest extends FormRequest
                 'max:50',
                 Rule::unique('contact_platforms', 'slug')
                     ->where(
-                        fn ($query) =>
-                        $query->where('slug', strtolower($this->input('name')))
+                        fn ($query) => $query->where('slug', strtolower($this->input('name')))
                     ),
             ],
             'slug' => 'required|string',

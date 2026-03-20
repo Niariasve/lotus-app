@@ -45,7 +45,7 @@ class CustomerController extends Controller
         $primary = $validated['primary_platform'] ?? null;
 
         unset($validated['platform'], $validated['primary_platform']);
-        
+
         DB::transaction(function () use ($validated, $platforms, $primary) {
             $customer = Customer::create($validated);
             $this->syncCustomerContacts($customer, $platforms, $primary);
@@ -78,7 +78,7 @@ class CustomerController extends Controller
             'customer' => $customer,
             'contactPlatforms' => $contactPlatforms,
             'customerContacts' => $customerContacts,
-            'primary' => $primary
+            'primary' => $primary,
         ]);
     }
 
@@ -142,7 +142,9 @@ class CustomerController extends Controller
         foreach ($normalizedPlatforms as $slug => $identifier) {
             $platformId = $platformsBySlug->get($slug);
 
-            if (!$platformId) continue;
+            if (! $platformId) {
+                continue;
+            }
 
             $customer->contactPlatforms()->create([
                 'platform_id' => $platformId,

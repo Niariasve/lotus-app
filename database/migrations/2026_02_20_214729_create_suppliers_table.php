@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->string('name', 150)->unique();
             $table->text('description')->nullable();
-            
+
             $table->unsignedInteger('priority')->default(100);
 
             $table->decimal('tax_policy', 5, 4)->default(0.0000);

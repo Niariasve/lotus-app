@@ -30,8 +30,7 @@ class UpdateRequest extends FormRequest
                 Rule::unique('contact_platforms', 'slug')
                     ->ignore($this->route('contact_platform')->id)
                     ->where(
-                        fn ($query) =>
-                        $query->where('slug', strtolower($this->input('name')))
+                        fn ($query) => $query->where('slug', strtolower($this->input('name')))
                     ),
             ],
             'slug' => 'required|string',

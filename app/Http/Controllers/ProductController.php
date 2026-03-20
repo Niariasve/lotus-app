@@ -48,12 +48,12 @@ class ProductController extends Controller
     public function store(StoreRequest $request)
     {
         $validated = $request->validated();
-        
+
         Product::create($validated);
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Product created successfully!'
+            'message' => 'Product created successfully!',
         ]);
 
         return to_route('products.index');
@@ -80,7 +80,7 @@ class ProductController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Product updated successfully!'
+            'message' => 'Product updated successfully!',
         ]);
 
         return to_route('products.index');
@@ -95,9 +95,9 @@ class ProductController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Product deleted successfully!'
+            'message' => 'Product deleted successfully!',
         ]);
-        
+
         return to_route('products.index');
     }
 }

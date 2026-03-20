@@ -35,7 +35,7 @@ class SupplierProductOfferController extends Controller
             ])
             ->latest('id')
             ->get();
-   
+
         return Inertia::render('supplierProductOffer/Index', [
             'supplierProductOffers' => $supplierProductOffers,
         ]);
@@ -140,15 +140,16 @@ class SupplierProductOfferController extends Controller
     /**
      * Toggle the supplier's product offer availability
      */
-    public function toggleAvailability(SupplierProductOffer $supplierProductOffer) {
+    public function toggleAvailability(SupplierProductOffer $supplierProductOffer)
+    {
         $supplierProductOffer->update([
-            'is_available' => !$supplierProductOffer->is_available,
+            'is_available' => ! $supplierProductOffer->is_available,
             'last_checked_at' => now(),
         ]);
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Availability updated for offer with id ' . $supplierProductOffer->id,
+            'message' => 'Availability updated for offer with id '.$supplierProductOffer->id,
         ]);
 
         return back();

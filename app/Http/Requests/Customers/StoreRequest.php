@@ -31,46 +31,46 @@ class StoreRequest extends FormRequest
 
             'platform' => 'nullable|array',
             'platform.*' => 'nullable|string|max:100',
-            'primary_platform' => 'nullable|string'
+            'primary_platform' => 'nullable|string',
         ];
     }
 
     public function attributes(): array
     {
         $attributes = [];
-        
-        foreach($this->input('platform', []) as $slug => $value) {
+
+        foreach ($this->input('platform', []) as $slug => $value) {
             $attributes["platform.$slug"] = $slug;
         }
 
         return $attributes;
     }
 
-    public function after(): array 
+    public function after(): array
     {
         return [
-            function (Validator $validator) 
-            {
+            function (Validator $validator) {
                 $platforms = collect($this->input('platform', []))
                     ->filter(fn ($value) => filled($value));
 
                 if ($platforms->isNotEmpty()) {
-                    if (!$this->filled('primary_platform')) {
+                    if (! $this->filled('primary_platform')) {
                         $validator->errors()->add(
                             'primary_platform',
                             'You must choose a primary communication platform'
                         );
+
                         return;
                     }
 
-                    if (!$platforms->has($this->input('primary_platform'))) {
+                    if (! $platforms->has($this->input('primary_platform'))) {
                         $validator->errors()->add(
                             'primary_platform',
                             'Primary platform must have a valid platform'
                         );
                     }
                 }
-            }
+            },
         ];
     }
 }
