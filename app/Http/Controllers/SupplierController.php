@@ -40,7 +40,7 @@ class SupplierController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Supplier created succesfully!'
+            'message' => 'Supplier created succesfully!',
         ]);
 
         return to_route('suppliers.index');
@@ -67,7 +67,7 @@ class SupplierController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Supplier updated succesfully!'
+            'message' => 'Supplier updated succesfully!',
         ]);
 
         return to_route('suppliers.index');
@@ -82,7 +82,7 @@ class SupplierController extends Controller
 
         Inertia::flash([
             'type' => 'success',
-            'message' => 'Supplier deleted succesfully!'
+            'message' => 'Supplier deleted succesfully!',
         ]);
 
         return back();

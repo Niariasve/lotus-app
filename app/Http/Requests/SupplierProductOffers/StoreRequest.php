@@ -31,7 +31,7 @@ class StoreRequest extends FormRequest
                 'min:0',
                 Rule::unique('supplier_product_offers', 'priority')
                     ->where(
-                        fn($query) => $query
+                        fn ($query) => $query
                             ->where('supplier_id', $this->input('supplier_id'))
                             ->where('product_id', $this->input('product_id'))
                     ),

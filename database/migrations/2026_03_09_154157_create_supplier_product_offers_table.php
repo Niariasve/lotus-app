@@ -33,7 +33,7 @@ return new class extends Migration
 
             $table->decimal('retail_price', 10, 2)
                 ->comment('Retail price calculated by {[(base_cost + shipping)*supplier_tax + 8.75*product_weight]*profit_percentage}');
-            
+
             $table->decimal('profit_percentage', 5, 4)
                 ->comment('Profit percentage on this supplier product offer');
 
