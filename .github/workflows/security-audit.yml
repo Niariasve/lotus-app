@@ -1,4 +1,4 @@
-name: lint-check
+name: security-audit
 
 on:
   push:
@@ -13,23 +13,22 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-check:
+  security-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          tools: composer:v2
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -37,16 +36,11 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: |
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm ci
+      - name: Install Node dependencies
+        run: npm ci
 
-      - name: Run Pint Check
-        run: composer test:lint
+      - name: Run Composer audit
+        run: composer audit --locked --no-interaction
 
-      - name: Check Frontend Formatting
-        run: npm run format:check
-
-      - name: Check Frontend Lint
-        run: npm run lint:check
+      - name: Run npm audit
+        run: npm audit --audit-level=high
