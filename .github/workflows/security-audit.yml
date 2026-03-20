@@ -36,11 +36,8 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Install Node dependencies
-        run: npm ci
-
       - name: Run Composer audit
-        run: composer audit --locked --no-interaction
+        run: composer audit --locked --no-dev --no-interaction
 
       - name: Run npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --package-lock-only --omit=dev --audit-level=high

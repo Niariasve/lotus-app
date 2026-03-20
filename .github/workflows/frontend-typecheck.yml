@@ -24,6 +24,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -31,7 +37,15 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+          npm ci
+
+      - name: Prepare Laravel environment
+        run: cp .env.example .env
+
+      - name: Generate Wayfinder artifacts
+        run: composer wayfinder:generate
 
       - name: Run type checks
         run: npm run typecheck
