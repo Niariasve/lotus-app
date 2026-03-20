@@ -1,58 +1,40 @@
-name: lint-check
+name: format-on-push
 
 on:
   push:
     branches:
       - dev
       - develop
-      - main
-  pull_request:
-    branches:
-      - dev
-      - develop
-      - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-check:
+  format-on-push:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
       - name: Install Dependencies
-        run: |
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm ci
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Prepare Laravel environment
-        run: cp .env.example .env
+      - name: Run Pint
+        run: composer lint
 
-      - name: Generate Wayfinder artifacts
-        run: composer wayfinder:generate
-
-      - name: Run Pint Check
-        run: composer test:lint
-
-      - name: Check Frontend Formatting
-        run: npm run format:check
-
-      - name: Check Frontend Lint
-        run: npm run lint:check
+      - name: Commit formatting changes
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          commit_message: 'style: apply Pint formatting'

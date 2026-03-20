@@ -1,11 +1,6 @@
 name: static-analysis
 
 on:
-  push:
-    branches:
-      - dev
-      - develop
-      - main
   pull_request:
     branches:
       - dev
