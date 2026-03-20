@@ -21,7 +21,7 @@ class Customer extends Model
         return $this->hasMany(CustomerContact::class);
     }
 
-    public function primaryContactPlatform(): HasOne 
+    public function primaryContactPlatform(): HasOne
     {
         return $this->hasOne(CustomerContact::class)->where('is_primary', true);
     }

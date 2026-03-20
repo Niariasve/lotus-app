@@ -30,7 +30,7 @@ return new class extends Migration
             $table->decimal('weight_real', 6, 3)->nullable();
 
             $table->date('release_date')->nullable();
-            
+
             $table->timestamps();
 
             /*

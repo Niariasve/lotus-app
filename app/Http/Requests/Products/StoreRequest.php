@@ -24,10 +24,10 @@ class StoreRequest extends FormRequest
     {
         return [
             'sku' => [
-                'required', 
-                'string', 
+                'required',
+                'string',
                 'max:100',
-                Rule::unique('products', 'sku')
+                Rule::unique('products', 'sku'),
             ],
             'name' => 'required|string|max:200',
             'description' => 'nullable|string',
@@ -36,7 +36,7 @@ class StoreRequest extends FormRequest
             'height' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
             'weight_est' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
             'weight_real' => 'nullable|numeric|decimal:0,3|min:0|max:999.999',
-            'release_date' => 'nullable|date'
+            'release_date' => 'nullable|date',
         ];
     }
 }

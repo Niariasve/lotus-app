@@ -65,7 +65,7 @@ class CustomerSeeder extends Seeder
     {
         return match ($slug) {
             'whatsapp' => $faker->numerify('5939########'),
-            'telegram' => '@' . $faker->unique()->userName(),
+            'telegram' => '@'.$faker->unique()->userName(),
             default => $faker->unique()->userName(),
         };
     }

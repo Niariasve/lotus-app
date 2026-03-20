@@ -47,4 +47,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('supplier-product-offer.availability');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

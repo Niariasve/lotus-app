@@ -32,7 +32,7 @@ class UpdateRequest extends FormRequest
 
             'platform' => 'nullable|array',
             'platform.*' => 'nullable|string|max:100',
-            'primary_platform' => 'nullable|string'
+            'primary_platform' => 'nullable|string',
         ];
     }
 
@@ -52,25 +52,26 @@ class UpdateRequest extends FormRequest
         return [
             function (Validator $validator) {
                 $platforms = collect($this->input('platform', []))
-                    ->filter(fn($value) => filled($value));
+                    ->filter(fn ($value) => filled($value));
 
                 if ($platforms->isNotEmpty()) {
-                    if (!$this->filled('primary_platform')) {
+                    if (! $this->filled('primary_platform')) {
                         $validator->errors()->add(
                             'primary_platform',
                             'You must choose a primary communication platform'
                         );
+
                         return;
                     }
 
-                    if (!$platforms->has($this->input('primary_platform'))) {
+                    if (! $platforms->has($this->input('primary_platform'))) {
                         $validator->errors()->add(
                             'primary_platform',
                             'Primary platform must have a valid platform'
                         );
                     }
                 }
-            }
+            },
         ];
     }
 }

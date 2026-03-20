@@ -47,13 +47,13 @@ return new class extends Migration
             $table->string('name', 50)->unique();
             $table->string('slug', 50)->unique();
             $table->boolean('is_active')->default(true);
-            
+
             $table->timestamps();
         });
 
         /*
         |------------------------------------------------------
-        | CUSTOMER_CONTACTS 
+        | CUSTOMER_CONTACTS
         |------------------------------------------------------
         */
         Schema::create('customer_contacts', function (Blueprint $table) {
