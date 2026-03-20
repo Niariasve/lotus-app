@@ -1,0 +1,273 @@
+# Implementation Plan: Supplier Orders
+
+## Overview
+
+Implement the full supplier orders lifecycle from database to frontend, following existing project conventions. Work proceeds layer by layer: migrations → models → factories → form requests → controllers → routes → TypeScript types → Vue pages → i18n → feature tests.
+
+## Tasks
+
+- [ ] 1. Database migrations
+  - [ ] 1.1 Create `supplier_order_statuses` migration
+    - Anonymous class syntax; columns: `id`, `name` (unique), `description` (nullable text), `sort_order` (nullable int), `timestamps`
+    - _Requirements: 3.1, 3.2_
+  - [ ] 1.2 Create `supplier_orders` migration
+    - Columns: `id`, `supplier_id` (FK → suppliers, cascade), `status_id` (FK → supplier_order_statuses, cascade), `order_number`, `ordered_at` (nullable date), `shipped_at` (nullable date), `arrived_at` (nullable date), `timestamps`
+    - _Requirements: 1.1, 1.3, 1.4_
+  - [ ] 1.3 Create `supplier_order_items` migration
+    - Columns: `id`, `supplier_order_id` (FK → supplier_orders, cascade), `product_id` (FK → products, cascade), `unit_cost_final` (decimal 8,2), `quantity` (int), `notes` (nullable text), `created_at` only (no `updated_at`)
+    - _Requirements: 2.1, 2.4, 2.5, 2.7_
+  - [ ] 1.4 Create `supplier_order_trackings` migration
+    - Columns: `id`, `supplier_order_id` (FK → supplier_orders, cascade), `tracking` (varchar), `created_at` only (no `updated_at`)
+    - _Requirements: 4.1, 4.2_
+  - [ ] 1.5 Create `supplier_order_payments` migration
+    - Columns: `id`, `supplier_order_id` (FK → supplier_orders, cascade), `amount` (decimal 8,2), `paid_at` (date), `timestamps`
+    - _Requirements: 6.1, 6.2, 6.4_
+
+- [ ] 2. Eloquent models
+  - [ ] 2.1 Create `SupplierOrderStatus` model
+    - `$fillable`: `name`, `description`, `sort_order`
+    - Relationship: `hasMany(SupplierOrder::class)`
+    - _Requirements: 3.1, 3.2_
+  - [ ] 2.2 Create `SupplierOrder` model
+    - `$fillable`: `supplier_id`, `status_id`, `order_number`, `ordered_at`, `shipped_at`, `arrived_at`
+    - `casts()`: `ordered_at`, `shipped_at`, `arrived_at` → `date:Y-m-d`
+    - Relationships: `belongsTo(Supplier::class)`, `belongsTo(SupplierOrderStatus::class, 'status_id')`, `hasMany(SupplierOrderItem::class)`, `hasMany(SupplierOrderTracking::class)`, `hasMany(SupplierOrderPayment::class)`
+    - _Requirements: 1.1, 1.3, 1.6_
+  - [ ] 2.3 Create `SupplierOrderItem` model
+    - `$fillable`: `supplier_order_id`, `product_id`, `unit_cost_final`, `quantity`, `notes`
+    - `const UPDATED_AT = null;` (no updated_at column)
+    - Relationship: `belongsTo(SupplierOrder::class)`, `belongsTo(Product::class)`
+    - _Requirements: 2.1, 2.7_
+  - [ ] 2.4 Create `SupplierOrderTracking` model
+    - `$fillable`: `supplier_order_id`, `tracking`
+    - `const UPDATED_AT = null;`
+    - Relationship: `belongsTo(SupplierOrder::class)`
+    - _Requirements: 4.1_
+  - [ ] 2.5 Create `SupplierOrderPayment` model
+    - `$fillable`: `supplier_order_id`, `amount`, `paid_at`
+    - `casts()`: `paid_at` → `date:Y-m-d`
+    - Relationship: `belongsTo(SupplierOrder::class)`
+    - _Requirements: 6.1, 6.4_
+
+- [ ] 3. Model factories
+  - [ ] 3.1 Create `SupplierOrderStatusFactory`
+    - `name`: `fake()->unique()->words(2, true)`, `description`: nullable, `sort_order`: nullable int
+    - _Requirements: 3.1_
+  - [ ] 3.2 Create `SupplierOrderFactory`
+    - Requires `SupplierFactory` and `SupplierOrderStatusFactory` states; `order_number`: `fake()->bothify('ORD-####')`, nullable dates
+    - _Requirements: 1.1_
+  - [ ] 3.3 Create `SupplierOrderItemFactory`
+    - Requires `SupplierOrderFactory` and existing `Product`; `unit_cost_final`: `fake()->randomFloat(2, 1, 999)`, `quantity`: `fake()->numberBetween(1, 100)`
+    - _Requirements: 2.1_
+  - [ ] 3.4 Create `SupplierOrderTrackingFactory`
+    - `tracking`: `fake()->bothify('TRK-########')`
+    - _Requirements: 4.1_
+  - [ ] 3.5 Create `SupplierOrderPaymentFactory`
+    - `amount`: `fake()->randomFloat(2, 10, 5000)`, `paid_at`: `fake()->dateThisYear()`
+    - _Requirements: 6.1_
+
+- [ ] 4. Form Requests
+  - [ ] 4.1 Create `SupplierOrders/StoreRequest` and `SupplierOrders/UpdateRequest`
+    - `StoreRequest`: require `supplier_id` (exists:suppliers), `status_id` (exists:supplier_order_statuses), `order_number` (required string), `ordered_at`/`shipped_at`/`arrived_at` (nullable date), `items` (required array min:1), `items.*.product_id` (required exists:products), `items.*.unit_cost_final` (required numeric min:0.01), `items.*.quantity` (required integer min:1), `items.*.notes` (nullable string)
+    - `UpdateRequest`: same rules as `StoreRequest`
+    - _Requirements: 1.2, 1.3, 1.5, 2.2, 2.3, 2.6_
+  - [ ] 4.2 Create `SupplierOrders/UpdateStatusRequest`
+    - Validate `status_id` exists in `supplier_order_statuses`
+    - _Requirements: 7.4_
+  - [ ] 4.3 Create `SupplierOrders/SplitRequest`
+    - Validate `items_to_move` (required array min:1, each item exists in `supplier_order_items`), `new_order_number` (required string)
+    - _Requirements: 5.3, 5.6_
+  - [ ] 4.4 Create `SupplierOrderStatuses/StoreRequest` and `SupplierOrderStatuses/UpdateRequest`
+    - `name` (required, unique:supplier_order_statuses with ignore on update), `description` (nullable string), `sort_order` (nullable integer)
+    - _Requirements: 3.2, 3.3_
+  - [ ] 4.5 Create `SupplierOrderStatuses/ReorderRequest`
+    - Validate `ids` (required array), `ids.*` (integer exists:supplier_order_statuses)
+    - _Requirements: 3.6_
+  - [ ] 4.6 Create `SupplierOrderTrackings/StoreRequest`
+    - `tracking` (required string, not just whitespace)
+    - _Requirements: 4.3_
+  - [ ] 4.7 Create `SupplierOrderPayments/StoreRequest`
+    - `amount` (required numeric min:0.01), `paid_at` (required date)
+    - _Requirements: 6.3_
+
+- [ ] 5. Controllers
+  - [ ] 5.1 Create `SupplierOrderController`
+    - `index`: eager-load `supplier:id,name`, `status:id,name`, `withCount('items')`, ordered by `id` desc; pass `orders` and `statuses` (all `SupplierOrderStatus` ordered by `sort_order`) as Inertia props; render `supplierOrders/Index`
+    - `create`: pass `suppliers`, `statuses`, `products` as props; render `supplierOrders/Create`
+    - `store`: use `StoreRequest`; wrap in `DB::transaction`; create `SupplierOrder` then create each item; flash success; `to_route('supplier-orders.index')`
+    - `edit`: eager-load `items.product`, `trackings` (ordered by `created_at`), `payments` (ordered by `paid_at`); pass `order`, `suppliers`, `statuses`, `products`; render `supplierOrders/Edit`
+    - `update`: use `UpdateRequest`; wrap in `DB::transaction`; update order then sync items (delete removed, upsert existing/new); flash success; `to_route('supplier-orders.index')`
+    - `destroy`: delete order (cascade handles children); flash success; `to_route('supplier-orders.index')`
+    - `updateStatus`: use `UpdateStatusRequest`; update `status_id`; flash success; `to_route('supplier-orders.index')`
+    - `split`: use `SplitRequest`; validate remaining items ≥ 1 manually; wrap in `DB::transaction`; create new order copying `supplier_id`/`status_id`; move selected items; flash success; redirect to edit of new order
+    - _Requirements: 1.1, 1.2, 1.6, 5.1–5.6, 7.1–7.4_
+  - [ ] 5.2 Create `SupplierOrderStatusController`
+    - `index`: return all statuses ordered by `sort_order` as Inertia response
+    - `store`: use `StoreRequest`; create status; flash success; redirect back
+    - `update`: use `UpdateRequest`; update status; flash success; redirect back
+    - `destroy`: check `$status->supplierOrders()->exists()`; if true return back with 422 error; else delete and flash success; redirect back
+    - `reorder`: use `ReorderRequest`; loop `ids` and update `sort_order` by index; redirect back
+    - _Requirements: 3.1, 3.3, 3.4, 3.6_
+  - [ ] 5.3 Create `SupplierOrderTrackingController`
+    - `store`: use `StoreRequest`; create tracking for the given order; flash success; redirect back
+    - _Requirements: 4.1, 4.2, 4.3_
+  - [ ] 5.4 Create `SupplierOrderPaymentController`
+    - `store`: use `StoreRequest`; create payment for the given order; flash success; redirect back
+    - `destroy`: delete the given payment (scoped to order); flash success; redirect back
+    - _Requirements: 6.1, 6.3, 6.6_
+
+- [ ] 6. Routes and Wayfinder
+  - [ ] 6.1 Add all supplier-order routes to `routes/web.php` under `auth` middleware
+    - `Route::resource('supplier-orders', SupplierOrderController::class)->except(['show'])`
+    - `POST supplier-orders/{supplier_order}/split` → `SupplierOrderController@split` named `supplier-orders.split`
+    - `PATCH supplier-orders/{supplier_order}/status` → `SupplierOrderController@updateStatus` named `supplier-orders.status`
+    - All `SupplierOrderStatusController` routes (index, store, put update, delete destroy, patch reorder)
+    - `POST supplier-orders/{supplier_order}/trackings` → `SupplierOrderTrackingController@store` named `supplier-orders.trackings.store`
+    - `POST/DELETE supplier-orders/{supplier_order}/payments[/{payment}]` → `SupplierOrderPaymentController`
+    - _Requirements: 1.1, 3.1, 4.1, 5.1, 6.1, 7.4_
+  - [ ] 6.2 Run `composer run wayfinder:generate` after routes are added
+    - Regenerates `resources/js/routes/` and `resources/js/actions/` with type-safe helpers for all new routes
+    - _Requirements: 1.1_
+
+- [ ] 7. TypeScript types
+  - [ ] 7.1 Create `resources/js/features/supplier-orders/types/supplierOrders.ts`
+    - Export interfaces: `SupplierOrderStatus`, `SupplierOrderItem`, `SupplierOrderTracking`, `SupplierOrderPayment`, `SupplierOrder` — matching the shapes defined in design.md
+    - _Requirements: 1.1, 2.1, 3.1, 4.1, 6.1_
+  - [ ] 7.2 Re-export from `resources/js/types/index.ts`
+    - Add `export * from '../features/supplier-orders/types/supplierOrders';`
+    - _Requirements: 1.1_
+
+- [ ] 8. Frontend pages
+  - [ ] 8.1 Create `resources/js/pages/supplierOrders/Index.vue`
+    - Props: `orders: SupplierOrder[]`, `statuses: SupplierOrderStatus[]`
+    - TanStack Vue Table with columns: order number (with split badge when sharing base number), supplier name, status (inline `Select` populated from `statuses` prop firing `router.patch` to `supplier-orders.status`), items count, `ordered_at`
+    - Delete action per row using `router.delete`
+    - Link to create and edit pages using Wayfinder helpers
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [ ] 8.2 Create `resources/js/pages/supplierOrders/Create.vue`
+    - Props: `suppliers: Supplier[]`, `statuses: SupplierOrderStatus[]`, `products: Product[]`
+    - `useForm` with order fields + dynamic `items` array (add/remove rows); each row has product select, unit_cost_final, quantity, notes
+    - Submit to `supplier-orders.store` via POST
+    - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3_
+  - [ ] 8.3 Create `resources/js/pages/supplierOrders/Edit.vue`
+    - Props: `order: SupplierOrder` (with items, trackings, payments), `suppliers: Supplier[]`, `statuses: SupplierOrderStatus[]`, `products: Product[]`
+    - Order form section (same fields as Create) wired to `supplier-orders.update` via PUT
+    - Tracking section: list existing trackings (chronological), form to add new tracking via POST to `supplier-orders.trackings.store`
+    - Payment section: list existing payments (sorted by `paid_at`), form to add new payment, delete button per payment
+    - Split section: checkbox list of items, new order number input, submit to `supplier-orders.split`
+    - _Requirements: 1.1, 4.1, 4.4, 5.1–5.6, 6.1, 6.5, 6.6_
+
+- [ ] 9. StatusDrawer shared component
+  - [ ] 9.1 Create `resources/js/components/StatusDrawer.vue`
+    - Uses the existing `Sheet` UI primitive for the drawer container
+    - Accepts props: `entityLabel: string`, `endpoints: { index, store, update, destroy, reorder }` (matching the `StatusDrawerProps` interface in design.md)
+    - Fetches statuses via Inertia visit to `endpoints.index` on open
+    - Supports create (inline form), edit (inline form), delete (with in-use guard surfacing backend error), and drag-to-reorder (fires `endpoints.reorder` on drop)
+    - _Requirements: 3.1, 3.4, 3.5, 3.6_
+
+- [ ] 10. i18n keys
+  - [ ] 10.1 Add supplier-order UI strings to `lang/en.json`
+    - Keys for: "Supplier Orders", "Supplier Order", "Order Number", "Ordered At", "Shipped At", "Arrived At", "Order Items", "Unit Cost", "Tracking Numbers", "Add Tracking", "Payments", "Add Payment", "Paid At", "Split Order", "New Order Number", "Items to Move", "Supplier Order Statuses", "Status in use, cannot be deleted", and all relevant flash messages
+    - _Requirements: 1.1, 3.1, 4.1, 5.1, 6.1_
+  - [ ] 10.2 Add the same keys to `lang/es.json` with Spanish translations
+    - _Requirements: 1.1_
+
+- [ ] 11. Feature tests (Pest)
+  - [ ] 11.1 Create `tests/Feature/SupplierOrders/SupplierOrderCrudTest.php`
+    - [ ]* 11.1.1 Write property test for Property 1: Order creation requires all mandatory fields
+      - **Property 1: Order creation requires all mandatory fields**
+      - **Validates: Requirements 1.2, 1.5**
+      - 100 iterations with randomized missing required fields; assert 422 and DB count unchanged
+    - [ ]* 11.1.2 Write property test for Property 2: Optional date fields accepted with or without values
+      - **Property 2: Optional date fields are accepted with or without values**
+      - **Validates: Requirements 1.3**
+      - Randomize presence/absence of `ordered_at`, `shipped_at`, `arrived_at`; assert 201/redirect and record persisted
+    - [ ]* 11.1.3 Write property test for Property 3: Cascade delete removes all child records
+      - **Property 3: Cascade delete removes all child records**
+      - **Validates: Requirements 1.6**
+      - Create order with items, trackings, payments; delete order; assert all child tables empty for that order
+  - [ ] 11.2 Create `tests/Feature/SupplierOrders/SupplierOrderItemTest.php`
+    - [ ]* 11.2.1 Write property test for Property 4: Item validation rejects invalid cost and quantity
+      - **Property 4: Item validation rejects invalid cost and quantity**
+      - **Validates: Requirements 2.2, 2.6**
+      - Randomize zero/negative `unit_cost_final` or `quantity` or missing `product_id`; assert 422 and no order persisted
+    - [ ]* 11.2.2 Write property test for Property 5: Item `created_at` is immutable after creation
+      - **Property 5: Item created_at is immutable after creation**
+      - **Validates: Requirements 2.7**
+      - Create order with items; record `created_at` values; update order; assert `created_at` unchanged on all items
+  - [ ] 11.3 Create `tests/Feature/SupplierOrders/SupplierOrderStatusTest.php`
+    - [ ]* 11.3.1 Write property test for Property 6: Status name uniqueness is enforced
+      - **Property 6: Status name uniqueness is enforced**
+      - **Validates: Requirements 3.3**
+      - Create a status; attempt to create another with same name (varied casing); assert 422 and count unchanged
+    - [ ]* 11.3.2 Write property test for Property 7: In-use status cannot be deleted
+      - **Property 7: In-use status cannot be deleted**
+      - **Validates: Requirements 3.4**
+      - Create status assigned to an order; attempt delete; assert 422 and status still exists
+    - [ ]* 11.3.3 Write property test for Property 8: Status reorder persists new sort_order values
+      - **Property 8: Status reorder persists new sort_order values**
+      - **Validates: Requirements 3.6**
+      - Create N statuses; submit random permutation to reorder endpoint; assert DB `sort_order` matches submitted order
+  - [ ] 11.4 Create `tests/Feature/SupplierOrders/SupplierOrderTrackingTest.php`
+    - [ ]* 11.4.1 Write property test for Property 9: Tracking entries are append-only
+      - **Property 9: Tracking entries are append-only**
+      - **Validates: Requirements 4.2**
+      - Create order with N trackings; add new tracking; assert count is N+1 and all previous entries still present
+    - [ ]* 11.4.2 Write property test for Property 10: Tracking requires a non-empty value
+      - **Property 10: Tracking requires a non-empty value**
+      - **Validates: Requirements 4.3**
+      - Submit empty/whitespace-only tracking values; assert 422 and count unchanged
+    - [ ]* 11.4.3 Write property test for Property 11: Trackings returned in chronological order
+      - **Property 11: Trackings are returned in chronological order**
+      - **Validates: Requirements 4.4**
+      - Create trackings with varied `created_at`; fetch edit page; assert trackings in ascending `created_at` order
+  - [ ] 11.5 Create `tests/Feature/SupplierOrders/SupplierOrderSplitTest.php`
+    - [ ]* 11.5.1 Write property test for Property 12: Split preserves original order number and remaining items
+      - **Property 12: Split preserves original order number and remaining items**
+      - **Validates: Requirements 5.2**
+      - Create order with items [A,B,C]; split off [C]; assert original has same `order_number` and items [A,B]
+    - [ ]* 11.5.2 Write property test for Property 13: Split requires a new order number
+      - **Property 13: Split requires a new order number**
+      - **Validates: Requirements 5.3**
+      - Submit split without `new_order_number` or with empty value; assert 422 and no new order created
+    - [ ]* 11.5.3 Write property test for Property 14: Split copies supplier and status to new order
+      - **Property 14: Split copies supplier and status to new order**
+      - **Validates: Requirements 5.4**
+      - Perform valid split; assert new order has same `supplier_id` and `status_id` as original
+    - [ ]* 11.5.4 Write property test for Property 15: Split requires at least one item on each side
+      - **Property 15: Split requires at least one item on each side**
+      - **Validates: Requirements 5.6**
+      - Attempt split selecting all items (leaving original empty) or no items; assert 422 and no new order created
+  - [ ] 11.6 Create `tests/Feature/SupplierOrders/SupplierOrderPaymentTest.php`
+    - [ ]* 11.6.1 Write property test for Property 16: Payment validation rejects invalid amount or missing date
+      - **Property 16: Payment validation rejects invalid amount or missing date**
+      - **Validates: Requirements 6.3**
+      - Randomize zero/negative `amount` or absent `paid_at`; assert 422 and payment count unchanged
+    - [ ]* 11.6.2 Write property test for Property 17: Payments returned sorted by paid_at ascending
+      - **Property 17: Payments are returned sorted by paid_at ascending**
+      - **Validates: Requirements 6.5**
+      - Create payments with varied `paid_at`; fetch edit page; assert payments in ascending `paid_at` order
+    - [ ]* 11.6.3 Write property test for Property 18: Payment deletion is isolated
+      - **Property 18: Payment deletion is isolated**
+      - **Validates: Requirements 6.6**
+      - Create N payments; delete one specific payment; assert N-1 payments remain and order is unchanged
+  - [ ] 11.7 Create `tests/Feature/SupplierOrders/SupplierOrderInlineStatusTest.php`
+    - [ ]* 11.7.1 Write property test for Property 19: Inline status update persists and redirects
+      - **Property 19: Inline status update persists and redirects**
+      - **Validates: Requirements 7.4**
+      - Submit valid `status_id` to `PATCH supplier-orders/{order}/status`; assert DB updated and response redirects to index
+
+- [ ] 12. Final checkpoint
+  - Ensure all tests pass with `php artisan test tests/Feature/SupplierOrders/`
+  - Run `npm run typecheck` to verify TypeScript correctness
+  - Ask the user if any questions arise before closing out.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for a faster MVP
+- All property tests use a minimum of 100 iterations via randomized factory loops
+- Each property test references its design document property number in a comment: `// Feature: supplier-orders, Property {N}: {text}`
+- Cascade deletes are enforced at the DB level (`onDelete('cascade')`) — not just Eloquent
+- `supplier_order_items` and `supplier_order_trackings` use `const UPDATED_AT = null` (no `updated_at` column)
+- Run `composer run wayfinder:generate` after task 6.1 before touching any frontend route helpers
+- Tests run against SQLite in-memory (configured in `phpunit.xml`) — do not change `phpunit.xml`
