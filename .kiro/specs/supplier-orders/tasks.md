@@ -50,15 +50,15 @@ Implement the supplier order management feature following the existing Laravel/I
     - Same as StoreRequest but `order_number` unique rule ignores current record
     - _Requirements: 5.1, 5.3_
 
-- [ ] 4. Create controllers and register routes
-  - [ ] 4.1 Create `app/Http/Controllers/SupplierOrderStatusController.php`
+- [x] 4. Create controllers and register routes
+  - [x] 4.1 Create `app/Http/Controllers/SupplierOrderStatusController.php`
     - `index()`: return all statuses (used as JSON/Inertia prop for the drawer)
     - `store(StoreRequest $request)`: create status, flash success, redirect to `supplier-orders.index`
     - `update(UpdateRequest $request, SupplierOrderStatus $supplierOrderStatus)`: update, flash, redirect back
     - `destroy(SupplierOrderStatus $supplierOrderStatus)`: delete (DB SET NULL handles orders), flash, redirect back
     - _Requirements: 1.1, 1.3_
 
-  - [ ] 4.2 Create `app/Http/Controllers/SupplierOrderController.php`
+  - [x] 4.2 Create `app/Http/Controllers/SupplierOrderController.php`
     - `index()`: paginated orders with eager-loaded `supplier`, `status`, `items_count`; also pass all `SupplierOrderStatus` records as `statuses` prop
     - `create()`: render `supplier-orders/Create` with all suppliers and statuses as props
     - `store(StoreRequest $request)`: wrap in `DB::transaction()` — create order then `items()->createMany()`; flash success, redirect to index
@@ -68,14 +68,14 @@ Implement the supplier order management feature following the existing Laravel/I
     - `destroy(SupplierOrder $supplierOrder)`: delete (cascade handles items), flash, redirect to index
     - _Requirements: 2.1, 3.5, 4.1, 4.2, 4.3, 5.1, 5.2, 6.1, 6.2_
 
-  - [ ] 4.3 Register routes in `routes/web.php`
+  - [x] 4.3 Register routes in `routes/web.php`
     - Add `use` statements for both new controllers
     - Add auth-middleware group with:
       - `Route::resource('supplier-order-statuses', SupplierOrderStatusController::class)->only(['index', 'store', 'update', 'destroy']);`
       - `Route::resource('supplier-orders', SupplierOrderController::class);`
     - _Requirements: 7.1, 7.2_
 
-  - [ ] 4.4 Regenerate Wayfinder after routes are registered
+  - [x] 4.4 Regenerate Wayfinder after routes are registered
     - Run `composer run wayfinder:generate` to produce `resources/js/routes/supplier-orders.ts`, `resources/js/routes/supplier-order-statuses.ts`, and the corresponding action helpers
     - _Requirements: 7.2_
 
