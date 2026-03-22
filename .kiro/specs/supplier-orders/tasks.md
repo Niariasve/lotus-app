@@ -32,21 +32,21 @@ Implement the supplier order management feature following the existing Laravel/I
     - `order(): BelongsTo`, `product(): BelongsTo`
     - _Requirements: 3.1_
 
-- [ ] 3. Create Form Requests
-  - [ ] 3.1 Create `app/Http/Requests/SupplierOrderStatuses/StoreRequest.php`
+- [x] 3. Create Form Requests
+  - [x] 3.1 Create `app/Http/Requests/SupplierOrderStatuses/StoreRequest.php`
     - Rules: `name` required|string|max:150|unique:supplier_order_statuses, `description` nullable|string
     - _Requirements: 1.1, 1.2_
 
-  - [ ] 3.2 Create `app/Http/Requests/SupplierOrderStatuses/UpdateRequest.php`
+  - [x] 3.2 Create `app/Http/Requests/SupplierOrderStatuses/UpdateRequest.php`
     - Same as StoreRequest but unique rule ignores current record: `unique:supplier_order_statuses,name,{id}`
     - _Requirements: 1.1, 1.2_
 
-  - [ ] 3.3 Create `app/Http/Requests/SupplierOrders/StoreRequest.php`
+  - [x] 3.3 Create `app/Http/Requests/SupplierOrders/StoreRequest.php`
     - Rules: `order_number` required|string|unique:supplier_orders, `supplier_id` required|integer|exists:suppliers,id, `status_id` nullable|integer|exists:supplier_order_statuses,id, `tracking` nullable|string|max:1000, `ordered_at` nullable|date, `shipped_at` nullable|date, `arrived_at` required|date
     - Nested items array: `items` required|array|min:1, `items.*.product_id` required|integer|exists:products,id, `items.*.quantity` required|integer|min:1, `items.*.unit_cost` required|decimal:0,2|min:0
     - _Requirements: 2.1, 2.3, 2.4, 3.1, 3.2, 3.3, 3.4_
 
-  - [ ] 3.4 Create `app/Http/Requests/SupplierOrders/UpdateRequest.php`
+  - [x] 3.4 Create `app/Http/Requests/SupplierOrders/UpdateRequest.php`
     - Same as StoreRequest but `order_number` unique rule ignores current record
     - _Requirements: 5.1, 5.3_
 
