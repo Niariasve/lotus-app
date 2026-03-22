@@ -4,7 +4,7 @@ This file gives coding agents the repo-specific rules for working safely and eff
 
 ## Stack Snapshot
 
-- Backend: Laravel 12, PHP 8.4, Inertia.js, Fortify, SQLite by default.
+- Backend: Laravel 12, PHP 8.4, Inertia.js, Fortify; for application/runtime/database work, assume MySQL-oriented behavior unless `.env` or runtime config shows another driver.
 - Frontend: Vue 3, TypeScript, Vite 7, Tailwind CSS 4, Reka UI, TanStack Vue Table.
 - Testing: Pest 4 on top of Laravel's test runner.
 - Static analysis / style: PHPStan + Larastan, Laravel Pint, ESLint, Prettier, `vue-tsc`.
@@ -57,7 +57,7 @@ This file gives coding agents the repo-specific rules for working safely and eff
 - PHP feature and unit tests live in `tests/Feature/` and `tests/Unit/`.
 - Pest is configured in `tests/Pest.php`.
 - Feature tests automatically use `RefreshDatabase`.
-- `phpunit.xml` sets `DB_CONNECTION=sqlite` and `DB_DATABASE=:memory:` for tests.
+- `phpunit.xml` sets `DB_CONNECTION=sqlite` and `DB_DATABASE=:memory:` for tests; treat this in-memory SQLite setup as test/CI-only fallback, not the preferred database assumption for application or runtime decisions.
 - No frontend unit test runner is configured in this repo right now.
 - Do not invent `vitest`, `jest`, or `playwright` commands unless you add and wire them first.
 
@@ -166,7 +166,8 @@ This file gives coding agents the repo-specific rules for working safely and eff
 ## Environment And Config Guidance
 
 - Never commit secrets from `.env`.
-- Test environment is configured through `phpunit.xml`; do not replace it with local-only hacks.
+- Test environment is configured through `phpunit.xml`; keep that SQLite setup scoped to tests/CI and do not replace it with local-only hacks.
+- For normal application/runtime/database work, prefer MySQL-oriented assumptions, but verify `.env` or deployment/runtime config before relying on any DB-specific behavior.
 - Shared Inertia props are defined in `app/Http/Middleware/HandleInertiaRequests.php`.
 - Middleware registration lives in `bootstrap/app.php`.
 - Localization is active; when adding UI strings, update both `lang/en.json` and `lang/es.json`.
