@@ -27,7 +27,7 @@ This file gives coding agents the repo-specific rules for working safely and eff
 ## Development Commands
 
 - Full local dev loop: `composer run dev`
-  - Starts Laravel server, queue listener, and Vite together via `concurrently`.
+    - Starts Laravel server, queue listener, and Vite together via `concurrently`.
 - SSR dev flow: `composer run dev:ssr`
 - Frontend-only dev server: `npm run dev`
 - Production frontend build: `npm run build`
@@ -36,7 +36,7 @@ This file gives coding agents the repo-specific rules for working safely and eff
 ## Test And Quality Commands
 
 - Full default test workflow: `composer run test`
-  - Clears config, runs Pint in test mode, then runs `php artisan test`.
+    - Clears config, runs Pint in test mode, then runs `php artisan test`.
 - PHP tests only: `php artisan test`
 - Single test file: `php artisan test tests/Feature/DashboardTest.php`
 - Filter to one Pest test name: `php artisan test --filter="authenticated users can visit the dashboard"`
@@ -108,11 +108,15 @@ This file gives coding agents the repo-specific rules for working safely and eff
 - Use Vue SFCs with `<script setup lang='ts'>`.
 - Use TypeScript everywhere in app code.
 - TS config is strict; keep types explicit enough to satisfy `vue-tsc`.
+- Keep each file focused on a single responsibility.
+- Prefer the smallest file that still reads clearly; split large files before they become monoliths.
 - Use `@/` alias for imports from `resources/js`.
 - ESLint enforces ordered imports and separate `type` imports.
 - Prefer `import type` / inline `type` specifiers for types.
 - Existing code usually groups imports as external, internal alias, then relative.
 - Prefer shadcn-vue/Reka-based components as the default UI component system.
+- Prefer Inertia `Form` for frontend forms instead of `useForm`; follow the existing pattern of `<Form v-bind="controller().form(...)" v-slot="{ processing, errors }">` with named inputs and hidden inputs for custom controls such as shadcn `Select`.
+- Extract UI logic into focused components or composables when that meaningfully reduces responsibility in the parent file.
 - Before creating or editing a feature UI component, check whether an appropriate component already exists in the project.
 - If no local component fits, check the shadcn-vue docs/site for an equivalent and integrate it following existing project patterns.
 - Only implement a custom component when no suitable local or upstream shadcn-vue component exists.
