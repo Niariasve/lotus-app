@@ -14,19 +14,19 @@ Implement the supplier order management feature following the existing Laravel/I
   - Verify `2026_03_22_210126_create_supplier_orders_table.php` references `supplier_order_statuses` (not `supplier_orders_statuses`) as the FK table — it already does, no change needed
   - _Requirements: 3.1, 3.6_
 
-- [ ] 2. Create Eloquent models
-  - [ ] 2.1 Create `app/Models/SupplierOrderStatus.php`
+- [x] 2. Create Eloquent models
+  - [x] 2.1 Create `app/Models/SupplierOrderStatus.php`
     - `$fillable = ['name', 'description']`
     - `orders(): HasMany` → `SupplierOrder::class` via `status_id`
     - _Requirements: 1.1_
 
-  - [ ] 2.2 Create `app/Models/SupplierOrder.php`
+  - [x] 2.2 Create `app/Models/SupplierOrder.php`
     - `$fillable` for all order fields
     - `casts()` for `supplier_id`, `status_id` (integer), and date fields (`ordered_at`, `shipped_at`, `arrived_at`)
     - `supplier(): BelongsTo`, `status(): BelongsTo` (via `status_id`), `items(): HasMany`
     - _Requirements: 2.1, 2.2_
 
-  - [ ] 2.3 Create `app/Models/SupplierOrderItem.php`
+  - [x] 2.3 Create `app/Models/SupplierOrderItem.php`
     - `$fillable = ['supplier_order_id', 'product_id', 'quantity', 'unit_cost']`
     - `casts()` for `quantity` (integer) and `unit_cost` (decimal:2)
     - `order(): BelongsTo`, `product(): BelongsTo`
