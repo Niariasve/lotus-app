@@ -84,14 +84,14 @@ Implement the supplier order management feature following the existing Laravel/I
   - Run `composer run analyse` to check for PHPStan issues in new PHP files
   - Ask the user if any questions arise before proceeding to the frontend
 
-- [ ] 6. Add i18n keys
-  - [ ] 6.1 Add keys to `lang/en.json`:
+- [x] 6. Add i18n keys
+  - [x] 6.1 Add keys to `lang/en.json`:
     - `supplier_orders.title`, `supplier_orders.description`, `supplier_order_statuses.title`, `supplier_order_statuses.description`
     - `supplier_orders.fields.order_number`, `.supplier`, `.status`, `.tracking`, `.ordered_at`, `.shipped_at`, `.arrived_at`, `.items`, `.unit_cost`, `.quantity`, `.line_total`, `.order_total`
     - `supplier_orders.no_status` → `"—"`
     - _Requirements: 4.1, 4.2, 4.4_
 
-  - [ ] 6.2 Add the same keys to `lang/es.json` with Spanish translations (see design.md i18n table for values)
+  - [x] 6.2 Add the same keys to `lang/es.json` with Spanish translations (see design.md i18n table for values)
     - _Requirements: 4.1, 4.2, 4.4_
 
 - [ ] 7. Create TypeScript types and re-exports
