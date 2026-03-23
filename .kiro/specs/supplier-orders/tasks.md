@@ -94,21 +94,21 @@ Implement the supplier order management feature following the existing Laravel/I
   - [x] 6.2 Add the same keys to `lang/es.json` with Spanish translations (see design.md i18n table for values)
     - _Requirements: 4.1, 4.2, 4.4_
 
-- [ ] 7. Create TypeScript types and re-exports
-  - [ ] 7.1 Create `resources/js/features/supplier-order-statuses/types/supplierOrderStatuses.ts`
+- [x] 7. Create TypeScript types and re-exports
+  - [x] 7.1 Create `resources/js/features/supplier-order-statuses/types/supplierOrderStatuses.ts`
     - Export `SupplierOrderStatus` interface (id, name, description, created_at, updated_at)
     - _Requirements: 1.4_
 
-  - [ ] 7.2 Create `resources/js/features/supplier-orders/types/supplierOrders.ts`
+  - [x] 7.2 Create `resources/js/features/supplier-orders/types/supplierOrders.ts`
     - Export `SupplierOrderItem` interface (id, supplier_order_id, product_id, quantity, unit_cost, product?)
     - Export `SupplierOrder` interface (all fields, optional relations: supplier?, status?, items?, items_count?)
     - _Requirements: 4.1, 4.2_
 
-  - [ ] 7.3 Create `resources/js/features/supplier-orders/types/columns.ts`
+  - [x] 7.3 Create `resources/js/features/supplier-orders/types/columns.ts`
     - TanStack column definitions for the orders index table: order_number, supplier name, status name (with null guard showing "—"), tracking, ordered_at, shipped_at, arrived_at, items_count, created_at
     - _Requirements: 4.1, 4.4_
 
-  - [ ] 7.4 Re-export new types from `resources/js/types/index.ts`
+  - [x] 7.4 Re-export new types from `resources/js/types/index.ts`
     - Add exports for `supplierOrderStatuses` and `supplierOrders` type files
     - _Requirements: 4.1_
 
