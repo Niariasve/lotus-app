@@ -123,7 +123,7 @@ const {
                                 </template>
 
                                 <template v-else>
-                                    <div class="flex items-start justify-between gap-4">
+                                    <div class="flex items-center justify-between gap-4">
                                         <div class="space-y-1">
                                             <p class="text-sm font-semibold text-foreground">
                                                 {{ status.name }}
