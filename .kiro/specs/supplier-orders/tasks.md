@@ -112,8 +112,8 @@ Implement the supplier order management feature following the existing Laravel/I
     - Add exports for `supplierOrderStatuses` and `supplierOrders` type files
     - _Requirements: 4.1_
 
-- [ ] 8. Build the StatusDrawer component and orders Index page
-  - [ ] 8.1 Create `resources/js/pages/supplier-orders/StatusDrawer.vue`
+- [x] 8. Build the StatusDrawer component and orders Index page
+  - [x] 8.1 Create `resources/js/pages/supplier-orders/StatusDrawer.vue`
     - Props: `statuses: SupplierOrderStatus[]`, `open: boolean`; emit `update:open`
     - Uses Reka UI Drawer primitive
     - Lists all statuses; each row has an edit button that switches to an inline edit form (name + description inputs, save/cancel)
@@ -122,7 +122,7 @@ Implement the supplier order management feature following the existing Laravel/I
     - On success Inertia reloads page props; drawer stays open
     - _Requirements: 1.1, 1.3, 1.4_
 
-  - [ ] 8.2 Create `resources/js/pages/supplier-orders/Index.vue`
+  - [x] 8.2 Create `resources/js/pages/supplier-orders/Index.vue`
     - Props: `orders: SupplierOrder[]` (paginated), `statuses: SupplierOrderStatus[]`
     - Header with "Manage Statuses" button (opens StatusDrawer) and "Create Order" button
     - DataTable using `columns` from `columns.ts`

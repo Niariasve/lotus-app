@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { Link } from '@inertiajs/vue3';
-    import { Apple, BookOpen, BookUser, Container, Folder, LayoutGrid, Package, User } from 'lucide-vue-next';
+    import { Apple, BookOpen, BookUser, Container, Folder, LayoutGrid, Package, SendToBack, User } from 'lucide-vue-next';
     import NavFooter from '@/components/NavFooter.vue';
     import NavMain from '@/components/NavMain.vue';
     import NavUser from '@/components/NavUser.vue';
@@ -17,6 +17,7 @@
     import contactPlatforms from '@/routes/contact-platforms';
     import customers from '@/routes/customers';
     import products from '@/routes/products';
+    import supplierOrders from '@/routes/supplier-orders';
     import supplierProductOffer from '@/routes/supplier-product-offer';
     import suppliers from '@/routes/suppliers';
     import { type NavItem } from '@/types';
@@ -52,6 +53,11 @@
             title: 'Supplier Product Offer',
             href: supplierProductOffer.index(),
             icon: Package,
+        },
+        {
+            title: 'Supplier Orders',
+            href: supplierOrders.index(),
+            icon: SendToBack,
         }
     ];
 
