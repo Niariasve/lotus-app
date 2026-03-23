@@ -11,6 +11,8 @@ type SupplierOrderItemDraft = {
     unitCost: string,
 };
 
+export type { SupplierOrderItemDraft };
+
 type UseCreateSupplierOrderFormProps = {
     suppliers: Supplier[],
     statuses: SupplierOrderStatus[],
@@ -107,6 +109,26 @@ export const useCreateSupplierOrderForm = (
         item.productId = value === null ? '' : String(value);
     };
 
+    const setItemQuantity = (key: number, value: string | number): void => {
+        const item = items.value.find((currentItem) => currentItem.key === key);
+
+        if (!item) {
+            return;
+        }
+
+        item.quantity = String(value);
+    };
+
+    const setItemUnitCost = (key: number, value: string | number): void => {
+        const item = items.value.find((currentItem) => currentItem.key === key);
+
+        if (!item) {
+            return;
+        }
+
+        item.unitCost = String(value);
+    };
+
     const itemName = (index: number, field: string): string => {
         return `items[${index}][${field}]`;
     };
@@ -133,6 +155,8 @@ export const useCreateSupplierOrderForm = (
         selectedStatus,
         selectedSupplier,
         setItemProduct,
+        setItemQuantity,
+        setItemUnitCost,
         setStatusId,
         setSupplierId,
         statusId,
