@@ -155,7 +155,7 @@ const emit = defineEmits<{
                             <FieldLabel for="arrived_at">
                                 {{ $t('supplier_orders.fields.arrived_at') }}
                             </FieldLabel>
-                            <Input id="arrived_at" name="arrived_at" type="date" :disabled="disabled" required />
+                            <Input id="arrived_at" name="arrived_at" type="date" :disabled="disabled" />
                             <InputError :message="errors.arrived_at" />
                         </Field>
                     </div>

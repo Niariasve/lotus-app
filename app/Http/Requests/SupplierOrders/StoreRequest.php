@@ -33,7 +33,7 @@ class StoreRequest extends FormRequest
             'tracking' => 'nullable|string|max:1000',
             'ordered_at' => 'nullable|date',
             'shipped_at' => 'nullable|date',
-            'arrived_at' => 'required|date',
+            'arrived_at' => 'nullable|date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
