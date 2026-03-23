@@ -18,6 +18,10 @@ return [
         'empty_status' => 'No status',
         'status_description' => 'Leave this blank if the order does not have a lifecycle status yet.',
     ],
+    'edit' => [
+        'title' => 'Edit Supplier Order',
+        'description' => 'Adjust order details and line items without losing the current structure.',
+    ],
     'fields' => [
         'order_number' => 'Order Number',
         'supplier' => 'Supplier',

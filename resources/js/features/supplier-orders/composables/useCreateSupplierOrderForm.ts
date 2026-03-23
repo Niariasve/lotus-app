@@ -1,6 +1,11 @@
 import type { AcceptableValue } from 'reka-ui';
 import { computed, ref } from 'vue';
-import { type Product, type Supplier, type SupplierOrderStatus } from '@/types';
+import {
+    type Product,
+    type Supplier,
+    type SupplierOrder,
+    type SupplierOrderStatus,
+} from '@/types';
 
 const EMPTY_STATUS_VALUE = '__none__';
 
@@ -14,6 +19,7 @@ type SupplierOrderItemDraft = {
 export type { SupplierOrderItemDraft };
 
 type UseCreateSupplierOrderFormProps = {
+    order?: SupplierOrder,
     suppliers: Supplier[],
     statuses: SupplierOrderStatus[],
     products: Product[],
@@ -29,10 +35,19 @@ const createEmptyItem = (key: number): SupplierOrderItemDraft => ({
 export const useCreateSupplierOrderForm = (
     props: UseCreateSupplierOrderFormProps,
 ) => {
-    const supplierId = ref('');
-    const statusId = ref('');
-    const nextItemKey = ref(1);
-    const items = ref<SupplierOrderItemDraft[]>([createEmptyItem(0)]);
+    const initialItems = props.order?.items?.length
+        ? props.order.items.map((item, index) => ({
+            key: index,
+            productId: String(item.product_id),
+            quantity: String(item.quantity),
+            unitCost: String(item.unit_cost),
+        }))
+        : [createEmptyItem(0)];
+
+    const supplierId = ref(props.order ? String(props.order.supplier_id) : '');
+    const statusId = ref(props.order?.status_id ? String(props.order.status_id) : '');
+    const nextItemKey = ref(initialItems.length);
+    const items = ref<SupplierOrderItemDraft[]>(initialItems);
 
     const selectedSupplier = computed(() => {
         return props.suppliers.find(

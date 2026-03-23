@@ -28,14 +28,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { type Supplier, type SupplierOrderStatus } from '@/types';
 
 defineProps<{
+    arrivedAtDefaultValue?: string | null,
     disabled: boolean,
     emptyStatusValue: string,
     errors: Record<string, string>,
+    orderNumberDefaultValue?: string,
+    orderedAtDefaultValue?: string | null,
     statusId: string,
     statusSelectValue: string,
     statuses: SupplierOrderStatus[],
     supplierId: string,
     suppliers: Supplier[],
+    shippedAtDefaultValue?: string | null,
+    trackingDefaultValue?: string | null,
 }>();
 
 const emit = defineEmits<{
@@ -67,7 +72,13 @@ const emit = defineEmits<{
                             <FieldLabel for="order_number">
                                 {{ $t('supplier_orders.fields.order_number') }}
                             </FieldLabel>
-                            <Input id="order_number" name="order_number" :disabled="disabled" required />
+                            <Input
+                                id="order_number"
+                                name="order_number"
+                                :default-value="orderNumberDefaultValue"
+                                :disabled="disabled"
+                                required
+                            />
                             <InputError :message="errors.order_number" />
                         </Field>
 
@@ -131,7 +142,13 @@ const emit = defineEmits<{
                             <FieldLabel for="tracking">
                                 {{ $t('supplier_orders.fields.tracking') }}
                             </FieldLabel>
-                            <Textarea id="tracking" name="tracking" :disabled="disabled" rows="4" />
+                            <Textarea
+                                id="tracking"
+                                name="tracking"
+                                :default-value="trackingDefaultValue ?? ''"
+                                :disabled="disabled"
+                                rows="4"
+                            />
                             <InputError :message="errors.tracking" />
                         </Field>
 
@@ -139,7 +156,13 @@ const emit = defineEmits<{
                             <FieldLabel for="ordered_at">
                                 {{ $t('supplier_orders.fields.ordered_at') }}
                             </FieldLabel>
-                            <Input id="ordered_at" name="ordered_at" type="date" :disabled="disabled" />
+                            <Input
+                                id="ordered_at"
+                                name="ordered_at"
+                                type="date"
+                                :default-value="orderedAtDefaultValue ?? ''"
+                                :disabled="disabled"
+                            />
                             <InputError :message="errors.ordered_at" />
                         </Field>
 
@@ -147,7 +170,13 @@ const emit = defineEmits<{
                             <FieldLabel for="shipped_at">
                                 {{ $t('supplier_orders.fields.shipped_at') }}
                             </FieldLabel>
-                            <Input id="shipped_at" name="shipped_at" type="date" :disabled="disabled" />
+                            <Input
+                                id="shipped_at"
+                                name="shipped_at"
+                                type="date"
+                                :default-value="shippedAtDefaultValue ?? ''"
+                                :disabled="disabled"
+                            />
                             <InputError :message="errors.shipped_at" />
                         </Field>
 
@@ -155,7 +184,13 @@ const emit = defineEmits<{
                             <FieldLabel for="arrived_at">
                                 {{ $t('supplier_orders.fields.arrived_at') }}
                             </FieldLabel>
-                            <Input id="arrived_at" name="arrived_at" type="date" :disabled="disabled" />
+                            <Input
+                                id="arrived_at"
+                                name="arrived_at"
+                                type="date"
+                                :default-value="arrivedAtDefaultValue ?? ''"
+                                :disabled="disabled"
+                            />
                             <InputError :message="errors.arrived_at" />
                         </Field>
                     </div>

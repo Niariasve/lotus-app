@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('tracking', 1000)->nullable();
             $table->date('ordered_at')->nullable();
             $table->date('shipped_at')->nullable();
-            $table->date('arrived_at');
+            $table->date('arrived_at')->nullable();
             $table->timestamps();
         });
     }

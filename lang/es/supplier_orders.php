@@ -18,6 +18,10 @@ return [
         'empty_status' => 'Sin estado',
         'status_description' => 'Dejá este campo vacío si la orden todavía no tiene un estado asignado.',
     ],
+    'edit' => [
+        'title' => 'Editar Orden de Proveedor',
+        'description' => 'Ajustá los datos de la orden y sus renglones sin perder la estructura actual.',
+    ],
     'fields' => [
         'order_number' => 'Número de Orden',
         'supplier' => 'Proveedor',
