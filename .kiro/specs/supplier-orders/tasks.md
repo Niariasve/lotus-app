@@ -166,10 +166,10 @@ Implement the supplier order management feature following the existing Laravel/I
   - [x] Display order total from prop
   - _Requirements: 4.2, 4.3, 4.4_
 
-- [ ] 11. Checkpoint — frontend typecheck and lint
-  - Run `npm run typecheck` to verify no TypeScript errors across new pages and components
-  - Run `npm run lint:check` to verify ESLint passes
-  - Ask the user if any questions arise before proceeding to tests
+- [x] 11. Checkpoint — frontend typecheck and lint
+  - [x] Run `npm run typecheck` to verify no TypeScript errors across new pages and components
+  - [x] Run `npm run lint:check` to verify ESLint passes
+  - [x] Ask the user if any questions arise before proceeding to tests
 
 - [ ] 12. Write feature tests for SupplierOrderStatus
   - [ ] 12.1 Create `tests/Feature/SupplierOrderStatuses/SupplierOrderStatusTest.php`
