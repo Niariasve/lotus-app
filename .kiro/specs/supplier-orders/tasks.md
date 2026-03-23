@@ -129,7 +129,21 @@ Implement the supplier order management feature following the existing Laravel/I
     - Passes `statuses` and drawer open state to `StatusDrawer`
     - _Requirements: 1.4, 4.1, 4.4_
 
-- [ ] 9. Build the Create and Edit order pages
+  - [ ] 8.3 Add a dedicated actions column to `resources/js/features/supplier-orders/types/columns.ts`
+    - Include an `actions` column aligned with the other table implementations in the repo
+    - Render a supplier-order table actions component instead of keeping row actions inline in the page
+    - Keep the existing data columns intact while appending the new actions column
+    - _Requirements: 4.1, 4.2, 5.1_
+
+  - [ ] 8.4 Create `resources/js/features/supplier-orders/components/SupplierOrderDataTableDropdown.vue`
+    - Match the interaction pattern used by the other resource tables
+    - Provide row actions for at least:
+      - View order (`supplier-orders.show`)
+      - Edit order (`supplier-orders.edit`)
+    - Use Wayfinder-generated supplier-order routes for both actions
+    - _Requirements: 4.2, 5.1_
+
+- [x] 9. Build the Create and Edit order pages
   - [x] 9.1 Create `resources/js/pages/supplier-orders/Create.vue`
     - Props: `suppliers: Supplier[]`, `statuses: SupplierOrderStatus[]`
     - Form fields: order_number, supplier_id (Select), status_id (Select, optional), tracking, ordered_at, shipped_at, arrived_at
@@ -137,7 +151,7 @@ Implement the supplier order management feature following the existing Laravel/I
     - Submit via Inertia form POST to `supplier-orders.store`
     - _Requirements: 2.1, 3.1_
 
-  - [ ] 9.2 Create `resources/js/pages/supplier-orders/Edit.vue`
+  - [x] 9.2 Create `resources/js/pages/supplier-orders/Edit.vue`
     - Props: `order: SupplierOrder` (with items), `suppliers: Supplier[]`, `statuses: SupplierOrderStatus[]`
     - Pre-populate all fields including existing items
     - Submit via Inertia form PUT to `supplier-orders.update`
