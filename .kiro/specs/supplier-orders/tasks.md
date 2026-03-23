@@ -171,26 +171,26 @@ Implement the supplier order management feature following the existing Laravel/I
   - [x] Run `npm run lint:check` to verify ESLint passes
   - [x] Ask the user if any questions arise before proceeding to tests
 
-- [ ] 12. Write feature tests for SupplierOrderStatus
-  - [ ] 12.1 Create `tests/Feature/SupplierOrderStatuses/SupplierOrderStatusTest.php`
+- [x] 12. Write feature tests for SupplierOrderStatus
+  - [x] 12.1 Create `tests/Feature/SupplierOrderStatuses/SupplierOrderStatusTest.php`
     - `test('guests are redirected from status routes')` — GET index, POST store, PATCH update, DELETE destroy all redirect to login; covers Property 11, _Requirements: 7.1, 7.2_
     - `test('authenticated user can create a status')` — POST valid payload, assert DB has record; _Requirements: 1.1_
     - `test('duplicate status name is rejected')` — POST same name twice, assert validation error; covers Property 1, _Requirements: 1.2_
     - `test('deleting a status nullifies order status_id')` — create status + order, delete status, assert order status_id is null; covers Property 2, _Requirements: 1.3_
     - `test('status index returns all statuses')` — assert response contains all created statuses; _Requirements: 1.4_
 
-  - [ ]* 12.2 Write property test for status name uniqueness (Property 1)
+  - [x]* 12.2 Write property test for status name uniqueness (Property 1)
     - **Property 1: Status name uniqueness**
     - **Validates: Requirements 1.2**
     - Loop 50 iterations: generate random name, create status, attempt duplicate, assert validation error each time
 
-  - [ ]* 12.3 Write property test for status deletion nullifying orders (Property 2)
+  - [x]* 12.3 Write property test for status deletion nullifying orders (Property 2)
     - **Property 2: Status deletion nullifies order references**
     - **Validates: Requirements 1.3**
     - Loop 20 iterations: create status + N orders assigned to it, delete status, assert all orders have status_id = null
 
-- [ ] 13. Write feature tests for SupplierOrder
-  - [ ] 13.1 Create `tests/Feature/SupplierOrders/SupplierOrderTest.php`
+- [x] 13. Write feature tests for SupplierOrder
+  - [x] 13.1 Create `tests/Feature/SupplierOrders/SupplierOrderTest.php`
     - `test('guests are redirected from order routes')` — covers Property 11, _Requirements: 7.1, 7.2_
     - `test('order requires valid supplier_id')` — covers Property 3, _Requirements: 2.2, 2.3_
     - `test('order rejects invalid status_id')` — covers Property 4, _Requirements: 2.4_
@@ -203,37 +203,37 @@ Implement the supplier order management feature following the existing Laravel/I
     - `test('null status displays without error')` — order with status_id=null, assert show response succeeds; _Requirements: 4.4_
     - `test('delete redirects to index with success')` — covers _Requirements: 6.2_
 
-  - [ ]* 13.2 Write property test for item constraints (Property 5)
+  - [x]* 13.2 Write property test for item constraints (Property 5)
     - **Property 5: Item constraints are enforced**
     - **Validates: Requirements 3.1, 3.3, 3.4**
     - Loop 100 iterations: generate random quantity (including 0 and negatives) and unit_cost (including negatives), assert invalid values are rejected and valid values are accepted
 
-  - [ ]* 13.3 Write property test for valid product reference (Property 6)
+  - [x]* 13.3 Write property test for valid product reference (Property 6)
     - **Property 6: Item references a valid product**
     - **Validates: Requirements 3.2**
     - Loop 50 iterations: submit item with non-existent product_id, assert validation error each time
 
-  - [ ]* 13.4 Write property test for order update item sync (Property 7)
+  - [x]* 13.4 Write property test for order update item sync (Property 7)
     - **Property 7: Order update syncs item collection**
     - **Validates: Requirements 3.5**
     - Loop 20 iterations: create order with N items, update with M different items, assert DB items exactly match submitted set
 
-  - [ ]* 13.5 Write property test for order deletion cascade (Property 8)
+  - [x]* 13.5 Write property test for order deletion cascade (Property 8)
     - **Property 8: Order deletion cascades to items**
     - **Validates: Requirements 3.6, 6.1**
     - Loop 20 iterations: create order with random number of items, delete order, assert no orphaned items remain
 
-  - [ ]* 13.6 Write property test for line total computation (Property 9)
+  - [x]* 13.6 Write property test for line total computation (Property 9)
     - **Property 9: Line total computation**
     - **Validates: Requirements 4.2**
     - Loop 100 iterations: generate random quantity (≥1) and unit_cost (≥0), assert `round(quantity * unit_cost, 2)` equals expected
 
-  - [ ]* 13.7 Write property test for order total computation (Property 10)
+  - [x]* 13.7 Write property test for order total computation (Property 10)
     - **Property 10: Order total computation**
     - **Validates: Requirements 4.3**
     - Loop 100 iterations: generate random set of items, assert order total equals sum of all line totals
 
-  - [ ]* 13.8 Write property test for authentication enforcement (Property 11)
+  - [x]* 13.8 Write property test for authentication enforcement (Property 11)
     - **Property 11: All routes require authentication**
     - **Validates: Requirements 7.1, 7.2**
     - For each route verb/path combination in both resource groups, assert unauthenticated request redirects to login
