@@ -7,6 +7,7 @@ test('supplier order translations are loaded from locale files', function () {
 
     expect(__('supplier_orders.title'))->toBe('Supplier Orders')
         ->and(__('supplier_orders.fields.order_number'))->toBe('Order Number')
+        ->and(__('supplier_orders.create.title'))->toBe('Create Supplier Order')
         ->and(__('supplier_order_statuses.description'))
         ->toBe('Manage order lifecycle statuses');
 
@@ -14,6 +15,7 @@ test('supplier order translations are loaded from locale files', function () {
 
     expect(__('supplier_orders.title'))->toBe('Órdenes de Proveedor')
         ->and(__('supplier_orders.fields.order_number'))->toBe('Número de Orden')
+        ->and(__('supplier_orders.create.title'))->toBe('Crear Orden de Proveedor')
         ->and(__('supplier_order_statuses.description'))
         ->toBe('Gestionar estados del ciclo de vida de órdenes');
 });

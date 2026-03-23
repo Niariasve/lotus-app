@@ -130,7 +130,7 @@ Implement the supplier order management feature following the existing Laravel/I
     - _Requirements: 1.4, 4.1, 4.4_
 
 - [ ] 9. Build the Create and Edit order pages
-  - [ ] 9.1 Create `resources/js/pages/supplier-orders/Create.vue`
+  - [x] 9.1 Create `resources/js/pages/supplier-orders/Create.vue`
     - Props: `suppliers: Supplier[]`, `statuses: SupplierOrderStatus[]`
     - Form fields: order_number, supplier_id (Select), status_id (Select, optional), tracking, ordered_at, shipped_at, arrived_at
     - Dynamic items section: add/remove rows, each with product_id (Select), quantity, unit_cost; show computed line total per row
