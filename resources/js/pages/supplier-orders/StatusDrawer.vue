@@ -1,10 +1,4 @@
 <script setup lang='ts'>
-import { Form } from '@inertiajs/vue3';
-import { Pencil, Plus, X } from 'lucide-vue-next';
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Sheet,
     SheetContent,
@@ -12,7 +6,8 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
+import CreateStatusCard from '@/features/supplier-order-statuses/components/CreateStatusCard.vue';
+import StatusListItem from '@/features/supplier-order-statuses/components/StatusListItem.vue';
 import { useStatusDrawer } from '@/features/supplier-order-statuses/composables/useStatusDrawer';
 import { type SupplierOrderStatus } from '@/types';
 
@@ -26,7 +21,6 @@ const emit = defineEmits<{
 }>();
 
 const {
-    createStatusForm,
     editingStatusId,
     formOptions,
     handleCreateSuccess,
@@ -35,7 +29,6 @@ const {
     startEditing,
     stopEditing,
     syncDrawerOpenState,
-    updateStatusForm,
 } = useStatusDrawer({ emit });
 </script>
 
@@ -65,87 +58,16 @@ const {
                         </div>
 
                         <div v-if="statuses.length" class="space-y-3">
-                            <div
+                            <StatusListItem
                                 v-for="status in statuses"
                                 :key="status.id"
-                                class="rounded-xl border border-border bg-card/60 p-4 shadow-xs"
-                            >
-                                <template v-if="editingStatusId === status.id">
-                                    <Form
-                                        v-bind="updateStatusForm(status.id)"
-                                        :options="formOptions"
-                                        @success="handleUpdateSuccess"
-                                        v-slot="{ processing, errors }"
-                                    >
-                                        <div class="space-y-4">
-                                            <div class="space-y-2">
-                                                <Label :for="`status-name-${status.id}`">Name</Label>
-                                                <Input
-                                                    :id="`status-name-${status.id}`"
-                                                    name="name"
-                                                    :default-value="status.name"
-                                                    :disabled="processing"
-                                                    maxlength="150"
-                                                    required
-                                                />
-                                                <InputError :message="errors.name" />
-                                            </div>
-
-                                            <div class="space-y-2">
-                                                <Label :for="`status-description-${status.id}`">
-                                                    Description
-                                                </Label>
-                                                <Textarea
-                                                    :id="`status-description-${status.id}`"
-                                                    name="description"
-                                                    :default-value="status.description ?? ''"
-                                                    :disabled="processing"
-                                                    rows="3"
-                                                />
-                                                <InputError :message="errors.description" />
-                                            </div>
-
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <Button type="submit" :disabled="processing">
-                                                    Save Changes
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    :disabled="processing"
-                                                    @click="stopEditing"
-                                                >
-                                                    Cancel
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </Form>
-                                </template>
-
-                                <template v-else>
-                                    <div class="flex items-center justify-between gap-4">
-                                        <div class="space-y-1">
-                                            <p class="text-sm font-semibold text-foreground">
-                                                {{ status.name }}
-                                            </p>
-                                            <p class="text-sm text-muted-foreground">
-                                                {{ status.description || 'No description provided.' }}
-                                            </p>
-                                        </div>
-
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            class="shrink-0"
-                                            @click="startEditing(status.id)"
-                                        >
-                                            <Pencil />
-                                            Edit
-                                        </Button>
-                                    </div>
-                                </template>
-                            </div>
+                                :form-options="formOptions"
+                                :is-editing="editingStatusId === status.id"
+                                :status="status"
+                                @cancel="stopEditing"
+                                @edit="startEditing"
+                                @success="handleUpdateSuccess"
+                            />
                         </div>
 
                         <div
@@ -156,67 +78,11 @@ const {
                         </div>
                     </section>
 
-                    <section class="space-y-4 rounded-2xl border border-border bg-muted/20 p-5">
-                        <div class="space-y-1">
-                            <h3 class="text-sm font-semibold tracking-tight text-foreground">
-                                New Status
-                            </h3>
-                            <p class="text-sm text-muted-foreground">
-                                Add a reusable status for supplier orders.
-                            </p>
-                        </div>
-
-                        <Form
-                            v-bind="createStatusForm()"
-                            :options="formOptions"
-                            reset-on-success
-                            @success="handleCreateSuccess"
-                            v-slot="{ processing, errors }"
-                        >
-                            <div class="space-y-4">
-                                <div class="space-y-2">
-                                    <Label for="new-status-name">Name</Label>
-                                    <Input
-                                        id="new-status-name"
-                                        name="name"
-                                        placeholder="Placed"
-                                        :disabled="processing"
-                                        maxlength="150"
-                                        required
-                                    />
-                                    <InputError :message="errors.name" />
-                                </div>
-
-                                <div class="space-y-2">
-                                    <Label for="new-status-description">Description</Label>
-                                    <Textarea
-                                        id="new-status-description"
-                                        name="description"
-                                        placeholder="Order is confirmed with the supplier and waiting for shipment updates."
-                                        :disabled="processing"
-                                        rows="3"
-                                    />
-                                    <InputError :message="errors.description" />
-                                </div>
-
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <Button type="submit" :disabled="processing">
-                                        <Plus />
-                                        Create Status
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        :disabled="processing"
-                                        @click="closeDrawer"
-                                    >
-                                        <X />
-                                        Close
-                                    </Button>
-                                </div>
-                            </div>
-                        </Form>
-                    </section>
+                    <CreateStatusCard
+                        :form-options="formOptions"
+                        @close="closeDrawer"
+                        @success="handleCreateSuccess"
+                    />
                 </div>
             </div>
         </SheetContent>

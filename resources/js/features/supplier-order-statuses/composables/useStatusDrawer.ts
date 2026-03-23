@@ -1,5 +1,4 @@
 import { ref } from 'vue';
-import supplierOrderStatusesRoutes from '@/routes/supplier-order-statuses';
 
 type UseStatusDrawerOptions = {
     emit: (event: 'update:open', value: boolean) => void,
@@ -42,16 +41,7 @@ export const useStatusDrawer = ({ emit }: UseStatusDrawerOptions) => {
         openDrawer();
     };
 
-    const createStatusForm = () => {
-        return supplierOrderStatusesRoutes.store.form();
-    };
-
-    const updateStatusForm = (statusId: number) => {
-        return supplierOrderStatusesRoutes.update.form(statusId);
-    };
-
     return {
-        createStatusForm,
         editingStatusId,
         formOptions,
         handleCreateSuccess,
@@ -61,6 +51,5 @@ export const useStatusDrawer = ({ emit }: UseStatusDrawerOptions) => {
         startEditing,
         stopEditing,
         syncDrawerOpenState,
-        updateStatusForm,
     };
 };
