@@ -129,19 +129,20 @@ Implement the supplier order management feature following the existing Laravel/I
     - Passes `statuses` and drawer open state to `StatusDrawer`
     - _Requirements: 1.4, 4.1, 4.4_
 
-  - [ ] 8.3 Add a dedicated actions column to `resources/js/features/supplier-orders/types/columns.ts`
+  - [x] 8.3 Add a dedicated actions column to `resources/js/features/supplier-orders/types/columns.ts`
     - Include an `actions` column aligned with the other table implementations in the repo
     - Render a supplier-order table actions component instead of keeping row actions inline in the page
     - Keep the existing data columns intact while appending the new actions column
     - _Requirements: 4.1, 4.2, 5.1_
 
-  - [ ] 8.4 Create `resources/js/features/supplier-orders/components/SupplierOrderDataTableDropdown.vue`
+  - [x] 8.4 Create `resources/js/features/supplier-orders/components/SupplierOrderDataTableDropdown.vue`
     - Match the interaction pattern used by the other resource tables
     - Provide row actions for at least:
       - View order (`supplier-orders.show`)
       - Edit order (`supplier-orders.edit`)
+      - Delete order (`supplier-orders.destroy`) with confirmation dialog
     - Use Wayfinder-generated supplier-order routes for both actions
-    - _Requirements: 4.2, 5.1_
+    - _Requirements: 4.2, 5.1, 6.1, 6.2_
 
 - [x] 9. Build the Create and Edit order pages
   - [x] 9.1 Create `resources/js/pages/supplier-orders/Create.vue`
@@ -157,12 +158,12 @@ Implement the supplier order management feature following the existing Laravel/I
     - Submit via Inertia form PUT to `supplier-orders.update`
     - _Requirements: 5.1, 5.2, 3.5_
 
-- [ ] 10. Build the Show order page
-  - Create `resources/js/pages/supplier-orders/Show.vue`
-  - Props: `order: SupplierOrder` (with items including product), `order_total: number`
-  - Display order header fields (supplier, status with null guard, tracking, dates)
-  - Items table: product name, quantity, unit_cost, computed line total (`quantity × unit_cost`)
-  - Display order total from prop
+- [x] 10. Build the Show order page
+  - [x] Create `resources/js/pages/supplier-orders/Show.vue`
+  - [x] Props: `order: SupplierOrder` (with items including product), `order_total: number`
+  - [x] Display order header fields (supplier, status with null guard, tracking, dates)
+  - [x] Items table: product name, quantity, unit_cost, computed line total (`quantity × unit_cost`)
+  - [x] Display order total from prop
   - _Requirements: 4.2, 4.3, 4.4_
 
 - [ ] 11. Checkpoint — frontend typecheck and lint

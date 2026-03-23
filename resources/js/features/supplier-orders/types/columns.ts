@@ -1,5 +1,7 @@
 import { type ColumnDef } from '@tanstack/vue-table';
+import { h } from 'vue';
 import { formatDate, formatDateTime } from '@/lib/utils';
+import SupplierOrderDataTableDropdown from '../components/SupplierOrderDataTableDropdown.vue';
 import { type SupplierOrder } from './supplierOrders';
 
 export const columns: ColumnDef<SupplierOrder>[] = [
@@ -52,5 +54,19 @@ export const columns: ColumnDef<SupplierOrder>[] = [
         accessorKey: 'created_at',
         header: 'Created At',
         cell: ({ row }) => formatDateTime(row.original.created_at),
+    },
+    {
+        id: 'actions',
+        header: () => h('div', { class: 'text-center' }, 'Actions'),
+        enableHiding: false,
+        cell: ({ row }) => {
+            const supplierOrder = row.original;
+
+            return h(
+                'div',
+                { class: 'relative flex justify-center' },
+                h(SupplierOrderDataTableDropdown, { supplierOrder }),
+            );
+        },
     },
 ];

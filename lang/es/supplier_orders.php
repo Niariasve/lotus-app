@@ -22,6 +22,14 @@ return [
         'title' => 'Editar Orden de Proveedor',
         'description' => 'Ajustá los datos de la orden y sus renglones sin perder la estructura actual.',
     ],
+    'show' => [
+        'title' => 'Detalle de la Orden de Proveedor',
+        'description' => 'Revisá la línea de tiempo de la orden, su estado y los renglones en un solo lugar.',
+        'order_details_description' => 'Resumen del proveedor, el estado del ciclo, las notas de seguimiento y las fechas clave.',
+        'items_description' => 'Todos los productos incluidos en esta orden de proveedor con sus totales por renglón.',
+        'summary' => 'Resumen de la Orden',
+        'summary_description' => 'Totales rápidos y contexto de estado para esta orden.',
+    ],
     'fields' => [
         'order_number' => 'Número de Orden',
         'supplier' => 'Proveedor',
@@ -37,4 +45,5 @@ return [
         'order_total' => 'Total de Orden',
     ],
     'no_status' => '—',
+    'no_tracking' => 'No hay notas de seguimiento cargadas.',
 ];

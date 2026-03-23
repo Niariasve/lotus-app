@@ -22,6 +22,14 @@ return [
         'title' => 'Edit Supplier Order',
         'description' => 'Adjust order details and line items without losing the current structure.',
     ],
+    'show' => [
+        'title' => 'Supplier Order Details',
+        'description' => 'Review the supplier order timeline, status, and line items in one place.',
+        'order_details_description' => 'Snapshot of the supplier, lifecycle state, tracking notes, and key dates.',
+        'items_description' => 'All products included in this supplier order with their computed line totals.',
+        'summary' => 'Order Snapshot',
+        'summary_description' => 'Quick totals and status context for this order.',
+    ],
     'fields' => [
         'order_number' => 'Order Number',
         'supplier' => 'Supplier',
@@ -37,4 +45,5 @@ return [
         'order_total' => 'Order Total',
     ],
     'no_status' => '—',
+    'no_tracking' => 'No tracking notes provided.',
 ];
