@@ -197,6 +197,7 @@ return [
         'filter' => 'filtro',
         'finished_at' => 'terminado el',
         'first_name' => 'nombre',
+        'full_name' => 'nombre completo',
         'gender' => 'género',
         'grand_prize' => 'gran Premio',
         'group' => 'grupo',
@@ -284,6 +285,5 @@ return [
         'winner' => 'ganador',
         'work' => 'trabajo',
         'year' => 'año',
-        'full_name' => 'nombre completo',
     ],
 ];
