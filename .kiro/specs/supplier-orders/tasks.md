@@ -238,10 +238,10 @@ Implement the supplier order management feature following the existing Laravel/I
     - **Validates: Requirements 7.1, 7.2**
     - For each route verb/path combination in both resource groups, assert unauthenticated request redirects to login
 
-- [ ] 14. Final checkpoint — run full test suite
-  - Run `php artisan test tests/Feature/SupplierOrders/ tests/Feature/SupplierOrderStatuses/` and ensure all tests pass
-  - Run `composer run analyse` to confirm no PHPStan regressions
-  - Ask the user if any questions arise
+- [x] 14. Final checkpoint — run full test suite
+  - [x] Run `php artisan test tests/Feature/SupplierOrders/ tests/Feature/SupplierOrderStatuses/` and ensure all tests pass
+  - [x] Run `composer run analyse` to confirm no PHPStan regressions
+  - [x] Ask the user if any questions arise
 
 ## Notes
 

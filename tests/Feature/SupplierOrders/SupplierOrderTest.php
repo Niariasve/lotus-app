@@ -272,6 +272,8 @@ test('deleting order cascades to items', function () {
 });
 
 test('order index returns expected shape', function () {
+    $this->withoutVite();
+
     $user = User::factory()->create();
     $supplier = createSupplierForOrderTests();
     $status = createStatusForOrderTests('Received');
@@ -309,6 +311,8 @@ test('order index returns expected shape', function () {
 });
 
 test('order show returns items with line totals', function () {
+    $this->withoutVite();
+
     $user = User::factory()->create();
     $supplier = createSupplierForOrderTests();
     $status = createStatusForOrderTests('Shipped');
@@ -347,6 +351,8 @@ test('order show returns items with line totals', function () {
 });
 
 test('null status displays without error', function () {
+    $this->withoutVite();
+
     $user = User::factory()->create();
     $supplier = createSupplierForOrderTests();
     $order = SupplierOrder::query()->create([
@@ -548,6 +554,8 @@ test('order total computation property holds across generated item sets', functi
     $user = User::factory()->create();
 
     foreach (range(1, 100) as $iteration) {
+        $this->withoutVite();
+
         $supplier = createSupplierForOrderTests();
         $order = SupplierOrder::query()->create([
             'order_number' => 'PO-TOTAL-'.$iteration.'-'.Str::upper(Str::random(5)),

@@ -8,6 +8,8 @@ use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('create page includes products for order items', function () {
+    $this->withoutVite();
+
     $user = User::factory()->create();
 
     $product = Product::query()->create([
@@ -31,6 +33,8 @@ test('create page includes products for order items', function () {
 });
 
 test('edit page includes products for existing and new order items', function () {
+    $this->withoutVite();
+
     $user = User::factory()->create();
 
     $supplier = Supplier::query()->create([
