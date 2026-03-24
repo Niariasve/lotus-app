@@ -4,5 +4,7 @@ export * from './ui';
 export * from '../features/customers/types/customers';
 export * from '../features/contact-platforms/types/contactPlatforms';
 export * from '../features/products/types/products';
+export * from '../features/supplier-order-statuses/types/supplierOrderStatuses';
+export * from '../features/supplier-orders/types/supplierOrders';
 export * from '../features/suppliers/types/suppliers';
 export * from '../features/supplier-product-offers/types/supplierProductOffers';

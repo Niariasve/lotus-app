@@ -2,364 +2,347 @@
 
 ## Overview
 
-The Supplier Orders feature adds a full purchase-order lifecycle to the application. After a user identifies the best sourcing option via `SupplierProductOffer`, they create a `SupplierOrder` against the chosen supplier. The order tracks line items (confirmed unit costs and quantities), shipping lifecycle dates, append-only tracking numbers, user-managed statuses, and one-or-more payment installments. Orders can be split: a subset of items moves to a new order while the original retains its number and remaining items.
+This feature adds supplier order management to the product sourcing system. It introduces three new entities — `SupplierOrderStatus`, `SupplierOrder`, and `SupplierOrderItem` — that are fully independent from `SupplierProductOffer`. A `SupplierOrder` records a confirmed purchase from a supplier, with line items capturing the exact products, quantities, and confirmed unit costs. Statuses are user-managed labels (e.g. Draft, Confirmed, Shipped) that can be freely created and deleted without affecting order data integrity.
 
-The feature is implemented as a standard Laravel/Inertia resource following the conventions already established in the codebase (RESTful controllers, Form Requests, Inertia pages, TanStack Vue Table, Reka UI primitives).
+The feature follows the existing Laravel/Inertia/Vue 3 patterns in the codebase: RESTful controllers, Form Requests, Eloquent models with `$fillable` + `casts()`, Inertia page components, TanStack Vue Table for listings, and Wayfinder for type-safe route helpers.
+
+Status management has no dedicated pages. Instead, a "Manage Statuses" button on the supplier orders index opens a Reka UI drawer. The drawer lists all statuses, allows creating a new one, and lets the user edit any existing status inline — all without leaving the orders index.
 
 ---
 
 ## Architecture
 
-The feature follows the existing layered architecture:
+The feature is split into two independent resource groups:
 
+1. **SupplierOrderStatus** — CRUD via API routes only (no dedicated pages). The UI is a drawer component embedded in the supplier orders index page.
+2. **SupplierOrder + SupplierOrderItems** — the main order resource. Items are managed as a nested collection on the order's create/edit forms. A dedicated `show` route renders the order detail view with computed totals.
+
+Both groups are protected by the `auth` middleware. All mutations go through Form Requests. Computed values (line total, order total) are never stored — they are calculated at query time or in the frontend.
+
+```mermaid
+graph TD
+    Supplier -->|has many| SupplierOrder
+    SupplierOrderStatus -->|optionally labels| SupplierOrder
+    SupplierOrder -->|has many| SupplierOrderItem
+    Product -->|referenced by| SupplierOrderItem
 ```
-Browser (Vue 3 + Inertia)
-    │
-    ▼
-Laravel Controllers (HTTP layer)
-    │  Form Requests (validation)
-    ▼
-Eloquent Models (business logic + relationships)
-    │
-    ▼
-MySQL database (5 new tables)
+
+### Request / Response Flow
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Inertia
+    participant Controller
+    participant Model
+
+    Browser->>Inertia: GET /supplier-orders
+    Inertia->>Controller: index()
+    Controller->>Model: paginated query with eager loads
+    Model-->>Controller: paginated result
+    Controller-->>Inertia: render('supplier-orders/Index', props)
+    Inertia-->>Browser: Vue page
+
+    Browser->>Inertia: POST /supplier-orders (with items[])
+    Inertia->>Controller: store(StoreRequest)
+    Controller->>Model: SupplierOrder::create() + items()->createMany()
+    Model-->>Controller: persisted order
+    Controller-->>Inertia: redirect to index + flash
+    Inertia-->>Browser: redirect
 ```
-
-### Request Flow
-
-- **Read** (index, edit): Controller eager-loads relationships → `Inertia::render()` with typed props
-- **Write** (store, update, destroy): Form Request validates → Model mutates → `Inertia::flash()` → `to_route()`
-- **Split**: Dedicated `POST /supplier-orders/{order}/split` → `SupplierOrderController@split` → DB transaction creates new order + moves items → redirect to new order edit page
-- **Status management**: `SupplierOrderStatusController` exposes JSON-style endpoints consumed by `StatusDrawer.vue` via Inertia visits / `router.post/patch/delete`
 
 ---
 
 ## Components and Interfaces
 
-### Backend Controllers
+### Backend
 
-#### `SupplierOrderController`
-`app/Http/Controllers/SupplierOrderController.php`
+#### Controllers
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `index` | `GET /supplier-orders` | Paginated/full list with eager-loaded supplier, status, item count |
-| `create` | `GET /supplier-orders/create` | Form with suppliers, statuses, products |
-| `store` | `POST /supplier-orders` | Validate + persist order + items |
-| `edit` | `GET /supplier-orders/{order}/edit` | Form pre-filled with order, items, trackings, payments |
-| `update` | `PUT /supplier-orders/{order}` | Validate + update order + sync items |
-| `destroy` | `DELETE /supplier-orders/{order}` | Cascade delete via model |
-| `split` | `POST /supplier-orders/{order}/split` | Split order into two; DB transaction |
-| `updateStatus` | `PATCH /supplier-orders/{order}/status` | Inline status update from index table |
+| Controller | Route prefix | Notes |
+|---|---|---|
+| `SupplierOrderStatusController` | `/supplier-order-statuses` | `index`, `store`, `update`, `destroy` only (no pages) |
+| `SupplierOrderController` | `/supplier-orders` | Full resource including `show` |
 
-#### `SupplierOrderStatusController`
-`app/Http/Controllers/SupplierOrderStatusController.php`
+`SupplierOrderController::index()` returns a paginated, sortable collection with eager-loaded `supplier`, `status`, and item count. It also passes all `SupplierOrderStatus` records as a prop so the drawer can render them without a separate request. The list shows: order number, supplier name, status, tracking, ordered/shipped/arrived dates, item count, and creation date.
 
-Non-resource, API-style — consumed by `StatusDrawer.vue`.
+`SupplierOrderController::show()` returns the order with all items eager-loaded (including `product`), plus computed line totals and order total passed as props.
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `index` | `GET /supplier-order-statuses` | Return all statuses ordered by `sort_order` |
-| `store` | `POST /supplier-order-statuses` | Create new status |
-| `update` | `PUT /supplier-order-statuses/{status}` | Update name/description |
-| `destroy` | `DELETE /supplier-order-statuses/{status}` | Delete if not in use |
-| `reorder` | `PATCH /supplier-order-statuses/reorder` | Bulk update `sort_order` |
+`SupplierOrderController::store()` and `update()` accept a nested `items[]` array and sync items inside a database transaction.
 
-#### `SupplierOrderTrackingController`
-`app/Http/Controllers/SupplierOrderTrackingController.php`
+`SupplierOrderStatusController` handles JSON-style responses for `store`, `update`, and `destroy` — these are called via Inertia from the drawer and redirect back to the orders index with a flash message.
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `store` | `POST /supplier-orders/{order}/trackings` | Append a tracking number |
-
-#### `SupplierOrderPaymentController`
-`app/Http/Controllers/SupplierOrderPaymentController.php`
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| `store` | `POST /supplier-orders/{order}/payments` | Add a payment |
-| `destroy` | `DELETE /supplier-orders/{order}/payments/{payment}` | Delete a single payment |
-
-### Form Requests
+#### Form Requests
 
 ```
 app/Http/Requests/SupplierOrders/
-├── StoreRequest.php
-├── UpdateRequest.php
-├── UpdateStatusRequest.php
-└── SplitRequest.php
+    StoreRequest.php
+    UpdateRequest.php
 
 app/Http/Requests/SupplierOrderStatuses/
-├── StoreRequest.php
-├── UpdateRequest.php
-└── ReorderRequest.php
-
-app/Http/Requests/SupplierOrderTrackings/
-└── StoreRequest.php
-
-app/Http/Requests/SupplierOrderPayments/
-└── StoreRequest.php
+    StoreRequest.php
+    UpdateRequest.php
 ```
 
-### Frontend Pages
+#### Routes (`routes/web.php` additions)
 
-```
-resources/js/pages/supplierOrders/
-├── Index.vue    — TanStack table; split-order indicator; inline status select per row
-├── Create.vue   — order form with dynamic item rows
-└── Edit.vue     — order form + tracking list + payment list
-```
+```php
+Route::middleware(['auth'])->group(function () {
+    // Status routes — no create/edit/show pages
+    Route::resource('supplier-order-statuses', SupplierOrderStatusController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
 
-The `Index.vue` status column renders a `Select` component populated from the `statuses` prop (all `SupplierOrderStatus` records passed by the controller). On change it fires `router.patch(route('supplier-orders.status', order.id), { status_id })`, which calls `updateStatus` and redirects back to the index, reloading the page data.
-
-### Shared Component
-
-`resources/js/components/StatusDrawer.vue`
-
-A reusable `Sheet`-based drawer that accepts props for entity label and endpoint URLs. Supports create, edit, delete, and drag-to-reorder. Designed to be used for any status-driven entity (supplier orders today, others in the future).
-
-Props interface:
-```ts
-interface StatusDrawerProps {
-    entityLabel: string          // e.g. "Supplier Order Status"
-    endpoints: {
-        index: string
-        store: string
-        update: (id: number) => string
-        destroy: (id: number) => string
-        reorder: string
-    }
-}
+    Route::resource('supplier-orders', SupplierOrderController::class);
+});
 ```
 
-### TypeScript Types
+### Frontend
 
-`resources/js/features/supplier-orders/types/supplierOrders.ts` — re-exported from `resources/js/types/index.ts`.
+#### Pages
+
+```
+resources/js/pages/supplier-orders/
+    Index.vue    — order list + "Manage Statuses" button + StatusDrawer
+    Create.vue
+    Edit.vue
+    Show.vue
+```
+
+No pages are created for `supplier-order-statuses`. Status management is handled entirely within the drawer component.
+
+#### Components
+
+```
+resources/js/pages/supplier-orders/
+    StatusDrawer.vue   — drawer with status list, create form, and inline edit form
+```
+
+The `StatusDrawer` component:
+- Is opened by a "Manage Statuses" button in the `Index.vue` header
+- Lists all statuses passed as a prop from the index controller
+- Has an inline form to create a new status (name + description)
+- Each status row has an edit button that switches that row into an inline edit form within the same drawer
+- Submits create/update/delete via Inertia form posts to the `supplier-order-statuses` routes
+- On success, Inertia reloads the page props (statuses list refreshes) and the drawer stays open
+
+#### Feature Types
+
+```
+resources/js/features/supplier-order-statuses/types/
+    supplierOrderStatuses.ts   — SupplierOrderStatus interface
+
+resources/js/features/supplier-orders/types/
+    supplierOrders.ts          — SupplierOrder, SupplierOrderItem interfaces
+    columns.ts                 — TanStack column definitions for index
+```
+
+Both type files are re-exported from `resources/js/types/index.ts`.
+
+#### Wayfinder
+
+After adding routes, run `composer run wayfinder:generate` to regenerate:
+- `resources/js/routes/supplier-order-statuses.ts`
+- `resources/js/routes/supplier-orders.ts`
+- `resources/js/actions/App/Http/Controllers/SupplierOrderStatusController.ts`
+- `resources/js/actions/App/Http/Controllers/SupplierOrderController.ts`
+
+Note: `supplier-order-statuses` Wayfinder helpers are used inside `StatusDrawer.vue` for form action URLs.
 
 ---
 
 ## Data Models
 
-### Database Schema
+### Existing Migrations (already created)
 
-#### `supplier_order_statuses`
-```sql
-id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-name            VARCHAR(255) NOT NULL UNIQUE
-description     TEXT NULL
-sort_order      INT NULL
-created_at      TIMESTAMP
-updated_at      TIMESTAMP
+**`supplier_order_statuses`** (`2026_03_22_205839`):
+```
+id                  bigint unsigned PK
+name                varchar(150) UNIQUE NOT NULL
+description         text NULL
+created_at / updated_at
 ```
 
-#### `supplier_orders`
-```sql
-id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-supplier_id     BIGINT UNSIGNED NOT NULL  -- FK → suppliers.id
-status_id       BIGINT UNSIGNED NOT NULL  -- FK → supplier_order_statuses.id
-order_number    VARCHAR(255) NOT NULL
-ordered_at      DATE NULL
-shipped_at      DATE NULL
-arrived_at      DATE NULL
-created_at      TIMESTAMP
-updated_at      TIMESTAMP
+**`supplier_orders`** (`2026_03_22_210126`):
+```
+id                  bigint unsigned PK
+order_number        varchar UNIQUE NOT NULL
+supplier_id         FK → suppliers.id  CASCADE DELETE
+status_id           FK → supplier_orders_statuses.id  SET NULL on delete  (nullable)
+tracking            varchar(1000) NULL
+ordered_at          date NULL
+shipped_at          date NULL
+arrived_at          date NOT NULL
+created_at / updated_at
 ```
 
-#### `supplier_order_items`
-```sql
-id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-supplier_order_id   BIGINT UNSIGNED NOT NULL  -- FK → supplier_orders.id CASCADE DELETE
-product_id          BIGINT UNSIGNED NOT NULL  -- FK → products.id
-unit_cost_final     DECIMAL(8,2) NOT NULL
-quantity            INT NOT NULL
-notes               TEXT NULL
-created_at          TIMESTAMP   -- no updated_at
-```
+> Note: the statuses table is named `supplier_orders_statuses` (with an extra `s` before `_statuses`). This is the actual table name used in the migration and must be used consistently across models, routes, and controllers.
 
-#### `supplier_order_trackings`
-```sql
-id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-supplier_order_id   BIGINT UNSIGNED NOT NULL  -- FK → supplier_orders.id CASCADE DELETE
-tracking            VARCHAR(255) NOT NULL
-created_at          TIMESTAMP   -- no updated_at
-```
+### New Migration Required
 
-#### `supplier_order_payments`
-```sql
-id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
-supplier_order_id   BIGINT UNSIGNED NOT NULL  -- FK → supplier_orders.id CASCADE DELETE
-amount              DECIMAL(8,2) NOT NULL
-paid_at             DATE NOT NULL
-created_at          TIMESTAMP
-updated_at          TIMESTAMP
+**`supplier_order_items`** (to be created):
+```
+id                  bigint unsigned PK
+supplier_order_id   FK → supplier_orders.id  CASCADE DELETE
+product_id          FK → products.id  RESTRICT (no delete if referenced)
+quantity            unsignedInteger NOT NULL  (≥ 1)
+unit_cost           decimal(10,2) NOT NULL    (≥ 0)
+created_at / updated_at
 ```
 
 ### Eloquent Models
 
-#### `SupplierOrder`
-```php
-protected $fillable = [
-    'supplier_id', 'status_id', 'order_number',
-    'ordered_at', 'shipped_at', 'arrived_at',
-];
+#### `SupplierOrderStatus`
 
-protected function casts(): array {
+```php
+// app/Models/SupplierOrderStatus.php
+protected $fillable = ['name', 'description'];
+
+public function orders(): HasMany
+{
+    return $this->hasMany(SupplierOrder::class, 'status_id');
+}
+```
+
+No `casts()` needed beyond defaults.
+
+#### `SupplierOrder`
+
+```php
+// app/Models/SupplierOrder.php
+protected $fillable = ['order_number', 'supplier_id', 'status_id', 'tracking', 'ordered_at', 'shipped_at', 'arrived_at'];
+
+protected function casts(): array
+{
     return [
-        'ordered_at' => 'date:Y-m-d',
-        'shipped_at' => 'date:Y-m-d',
-        'arrived_at' => 'date:Y-m-d',
+        'supplier_id' => 'integer',
+        'status_id'   => 'integer',
+        'ordered_at'  => 'date',
+        'shipped_at'  => 'date',
+        'arrived_at'  => 'date',
     ];
 }
 
-// Relationships: belongsTo Supplier, belongsTo SupplierOrderStatus
-// hasMany SupplierOrderItem (cascade), hasMany SupplierOrderTracking (cascade), hasMany SupplierOrderPayment (cascade)
-```
+public function supplier(): BelongsTo
+{
+    return $this->belongsTo(Supplier::class);
+}
 
-#### `SupplierOrderItem`
-```php
-protected $fillable = [
-    'supplier_order_id', 'product_id',
-    'unit_cost_final', 'quantity', 'notes',
-];
-// No updated_at: public $timestamps = false; + manually set created_at on create
-// Or: const UPDATED_AT = null;
-```
+public function status(): BelongsTo
+{
+    return $this->belongsTo(SupplierOrderStatus::class, 'status_id');
+}
 
-#### `SupplierOrderTracking`
-```php
-protected $fillable = ['supplier_order_id', 'tracking'];
-// const UPDATED_AT = null;
-```
-
-#### `SupplierOrderPayment`
-```php
-protected $fillable = ['supplier_order_id', 'amount', 'paid_at'];
-
-protected function casts(): array {
-    return ['paid_at' => 'date:Y-m-d'];
+public function items(): HasMany
+{
+    return $this->hasMany(SupplierOrderItem::class);
 }
 ```
 
-#### `SupplierOrderStatus`
+#### `SupplierOrderItem`
+
 ```php
-protected $fillable = ['name', 'description', 'sort_order'];
+// app/Models/SupplierOrderItem.php
+protected $fillable = ['supplier_order_id', 'product_id', 'quantity', 'unit_cost'];
+
+protected function casts(): array
+{
+    return [
+        'quantity'  => 'integer',
+        'unit_cost' => 'decimal:2',
+    ];
+}
+
+public function order(): BelongsTo
+{
+    return $this->belongsTo(SupplierOrder::class, 'supplier_order_id');
+}
+
+public function product(): BelongsTo
+{
+    return $this->belongsTo(Product::class);
+}
+```
+
+### Computed Values
+
+Line total and order total are **never stored**. They are computed:
+
+- **Line total**: `quantity × unit_cost` — computed in the frontend from item props, or via a model accessor for convenience in tests.
+- **Order total**: sum of all line totals — computed in the frontend by reducing the items array.
+
+For the `show` controller action, the backend can pass pre-computed totals as props to avoid floating-point logic duplication in the frontend:
+
+```php
+'order_total' => $order->items->sum(fn($item) => $item->quantity * $item->unit_cost),
 ```
 
 ### TypeScript Interfaces
 
-```ts
-// resources/js/features/supplier-orders/types/supplierOrders.ts
-
+```typescript
+// resources/js/features/supplier-order-statuses/types/supplierOrderStatuses.ts
 export interface SupplierOrderStatus {
-    id: number
-    name: string
-    description: string | null
-    sort_order: number | null
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
 }
+
+// resources/js/features/supplier-orders/types/supplierOrders.ts
+import type { Supplier } from '@/types';
+import type { SupplierOrderStatus } from '@/features/supplier-order-statuses/types/supplierOrderStatuses';
 
 export interface SupplierOrderItem {
-    id: number
-    supplier_order_id: number
-    product_id: number
-    unit_cost_final: number | string
-    quantity: number
-    notes: string | null
-    created_at: string
-    product?: Product | null
-}
-
-export interface SupplierOrderTracking {
-    id: number
-    supplier_order_id: number
-    tracking: string
-    created_at: string
-}
-
-export interface SupplierOrderPayment {
-    id: number
-    supplier_order_id: number
-    amount: number | string
-    paid_at: string
+    id: number;
+    supplier_order_id: number;
+    product_id: number;
+    quantity: number;
+    unit_cost: number | string;
+    product?: { id: number; name: string; sku: string | null } | null;
 }
 
 export interface SupplierOrder {
-    id: number
-    supplier_id: number
-    status_id: number
-    order_number: string
-    ordered_at: string | null
-    shipped_at: string | null
-    arrived_at: string | null
-    created_at: string
-    updated_at: string
-    supplier?: Supplier | null
-    status?: SupplierOrderStatus | null
-    items?: SupplierOrderItem[]
-    trackings?: SupplierOrderTracking[]
-    payments?: SupplierOrderPayment[]
-    items_count?: number
+    id: number;
+    order_number: string;
+    supplier_id: number;
+    status_id: number | null;
+    tracking: string | null;
+    ordered_at: string | null;
+    shipped_at: string | null;
+    arrived_at: string;
+    created_at: string;
+    updated_at: string;
+    supplier?: Supplier | null;
+    status?: SupplierOrderStatus | null;
+    items?: SupplierOrderItem[];
+    items_count?: number;
 }
 ```
 
-### Routes
+### i18n Keys
 
-```php
-// routes/web.php — under auth middleware
-Route::resource('supplier-orders', SupplierOrderController::class)->except(['show']);
-Route::post('supplier-orders/{supplier_order}/split', [SupplierOrderController::class, 'split'])
-    ->name('supplier-orders.split');
-Route::patch('supplier-orders/{supplier_order}/status', [SupplierOrderController::class, 'updateStatus'])
-    ->name('supplier-orders.status');
+New keys to add to both `lang/en.json` and `lang/es.json`:
 
-Route::get('supplier-order-statuses', [SupplierOrderStatusController::class, 'index'])
-    ->name('supplier-order-statuses.index');
-Route::post('supplier-order-statuses', [SupplierOrderStatusController::class, 'store'])
-    ->name('supplier-order-statuses.store');
-Route::put('supplier-order-statuses/{status}', [SupplierOrderStatusController::class, 'update'])
-    ->name('supplier-order-statuses.update');
-Route::delete('supplier-order-statuses/{status}', [SupplierOrderStatusController::class, 'destroy'])
-    ->name('supplier-order-statuses.destroy');
-Route::patch('supplier-order-statuses/reorder', [SupplierOrderStatusController::class, 'reorder'])
-    ->name('supplier-order-statuses.reorder');
+| Key | EN | ES |
+|---|---|---|
+| `supplier_orders.title` | `Supplier Orders` | `Órdenes de Proveedor` |
+| `supplier_orders.description` | `Manage supplier purchase orders` | `Gestionar órdenes de compra a proveedores` |
+| `supplier_order_statuses.title` | `Supplier Order Statuses` | `Estados de Orden de Proveedor` |
+| `supplier_order_statuses.description` | `Manage order lifecycle statuses` | `Gestionar estados del ciclo de vida de órdenes` |
+| `supplier_orders.fields.order_number` | `Order Number` | `Número de Orden` |
+| `supplier_orders.fields.supplier` | `Supplier` | `Proveedor` |
+| `supplier_orders.fields.status` | `Status` | `Estado` |
+| `supplier_orders.fields.tracking` | `Tracking` | `Seguimiento` |
+| `supplier_orders.fields.ordered_at` | `Ordered At` | `Fecha de Orden` |
+| `supplier_orders.fields.shipped_at` | `Shipped At` | `Fecha de Envío` |
+| `supplier_orders.fields.arrived_at` | `Arrived At` | `Fecha de Llegada` |
+| `supplier_orders.fields.items` | `Items` | `Artículos` |
+| `supplier_orders.fields.unit_cost` | `Unit Cost` | `Costo Unitario` |
+| `supplier_orders.fields.quantity` | `Quantity` | `Cantidad` |
+| `supplier_orders.fields.line_total` | `Line Total` | `Total de Línea` |
+| `supplier_orders.fields.order_total` | `Order Total` | `Total de Orden` |
+| `supplier_orders.no_status` | `—` | `—` |
 
-Route::post('supplier-orders/{supplier_order}/trackings', [SupplierOrderTrackingController::class, 'store'])
-    ->name('supplier-orders.trackings.store');
-
-Route::post('supplier-orders/{supplier_order}/payments', [SupplierOrderPaymentController::class, 'store'])
-    ->name('supplier-orders.payments.store');
-Route::delete('supplier-orders/{supplier_order}/payments/{payment}', [SupplierOrderPaymentController::class, 'destroy'])
-    ->name('supplier-orders.payments.destroy');
-```
-
-### Order Split Logic
-
-The `split` action runs inside a DB transaction:
-
-1. Validate: `items_to_move` (array of item IDs, min 1) and `new_order_number` (required string)
-2. Validate that remaining items (not in `items_to_move`) count ≥ 1
-3. Create new `SupplierOrder` copying `supplier_id` and `status_id` from original; set `order_number` to user input
-4. Move selected `SupplierOrderItem` records to the new order (`UPDATE supplier_order_items SET supplier_order_id = ? WHERE id IN (?)`)
-5. Redirect to `supplier-orders.edit` for the new order
-
-### Index N+1 Prevention
-
-```php
-SupplierOrder::query()
-    ->with(['supplier:id,name', 'status:id,name'])
-    ->withCount('items')
-    ->latest('id')
-    ->get();
-```
-
-The `index` action also passes `statuses` (all `SupplierOrderStatus` records ordered by `sort_order`) as an Inertia prop so the inline status `Select` in `Index.vue` can be populated without a separate request.
-
-### Inline Status Update
-
-`UpdateStatusRequest` (`app/Http/Requests/SupplierOrders/UpdateStatusRequest.php`) validates that `status_id` exists in the `supplier_order_statuses` table. The `updateStatus` controller action updates the order's `status_id` and redirects back to `supplier-orders.index`.
-
-### Split Order Visual Indicator
-
-The index query adds a computed flag. Orders sharing an `order_number` prefix (before any `-split-` suffix) or having the same base number are grouped. The simplest approach: the controller passes a `splitGroups` map (keyed by `order_number`) so the frontend can render a badge. Alternatively, a `is_split` boolean can be derived in the controller by detecting duplicate `order_number` prefixes in the result set.
 
 ---
 
@@ -367,175 +350,130 @@ The index query adds a computed flag. Orders sharing an `order_number` prefix (b
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
-### Property 1: Order creation requires all mandatory fields
+### Property 1: Status name uniqueness
 
-*For any* attempt to create a `SupplierOrder` missing one or more required fields (supplier, order_number, status, or items), the system should reject the request with validation errors and the order count in the database should remain unchanged.
+*For any* two `SupplierOrderStatus` creation requests that share the same `name` value, the second request should be rejected with a validation error and no duplicate record should be created.
 
-**Validates: Requirements 1.2, 1.5**
+**Validates: Requirements 1.2**
 
 ---
 
-### Property 2: Optional date fields are accepted with or without values
+### Property 2: Status deletion nullifies order references
 
-*For any* `SupplierOrder` creation or update, the system should accept the record regardless of whether `ordered_at`, `shipped_at`, and `arrived_at` are provided or null.
+*For any* `SupplierOrderStatus` that is assigned to one or more `SupplierOrder` records, deleting that status should leave all previously-assigned orders intact with their `status_id` set to `null`.
 
 **Validates: Requirements 1.3**
 
 ---
 
-### Property 3: Cascade delete removes all child records
+### Property 3: Order store requires a valid supplier
 
-*For any* `SupplierOrder` that has associated items, trackings, and payments, deleting the order should result in zero remaining items, trackings, and payments for that order in the database.
+*For any* store request with a `supplier_id` that does not correspond to an existing `Supplier`, the system should return a validation error and no order should be created. Conversely, for any valid `supplier_id`, the created order should be associated with that supplier.
 
-**Validates: Requirements 1.6**
-
----
-
-### Property 4: Item validation rejects invalid cost and quantity
-
-*For any* `SupplierOrderItem` where `unit_cost_final` ≤ 0 or `quantity` ≤ 0 or `product_id` is absent, the system should reject the item and not persist the order.
-
-**Validates: Requirements 2.2, 2.6**
+**Validates: Requirements 2.1, 2.2, 2.3**
 
 ---
 
-### Property 5: Item `created_at` is immutable after creation
+### Property 4: Order store rejects invalid status reference
 
-*For any* `SupplierOrderItem`, updating the parent order or any sibling item should leave that item's `created_at` timestamp unchanged.
+*For any* store request that includes a `status_id` value that does not correspond to an existing `SupplierOrderStatus`, the system should return a validation error and no order should be created.
 
-**Validates: Requirements 2.7**
-
----
-
-### Property 6: Status name uniqueness is enforced
-
-*For any* two `SupplierOrderStatus` records, the system should reject creation of the second if its `name` is identical (case-insensitively) to the first, and the status count should remain unchanged.
-
-**Validates: Requirements 3.3**
+**Validates: Requirements 2.4**
 
 ---
 
-### Property 7: In-use status cannot be deleted
+### Property 5: Item constraints are enforced
 
-*For any* `SupplierOrderStatus` that is referenced by at least one `SupplierOrder`, a delete request should be rejected and the status should remain in the database.
+*For any* `SupplierOrderItem` payload, a `quantity` less than 1 or a `unit_cost` less than 0 should be rejected with a validation error, and no item should be persisted. Valid payloads (quantity ≥ 1, unit_cost ≥ 0) should be accepted and persisted.
 
-**Validates: Requirements 3.4**
-
----
-
-### Property 8: Status reorder persists new sort_order values
-
-*For any* permutation of `SupplierOrderStatus` IDs submitted to the reorder endpoint, querying statuses afterward should return them in the submitted order (ascending by `sort_order`).
-
-**Validates: Requirements 3.6**
+**Validates: Requirements 3.1, 3.3, 3.4**
 
 ---
 
-### Property 9: Tracking entries are append-only
+### Property 6: Item references a valid product
 
-*For any* `SupplierOrder` with N tracking entries, adding a new tracking number should result in exactly N+1 entries, with all previous entries still present.
+*For any* `SupplierOrderItem` payload with a `product_id` that does not correspond to an existing `Product`, the system should return a validation error and no item should be persisted.
+
+**Validates: Requirements 3.2**
+
+---
+
+### Property 7: Order update syncs item collection
+
+*For any* existing `SupplierOrder` and any new set of valid items submitted via an update request, the order's item collection after the update should exactly match the submitted items (no stale items remain, all new items are present).
+
+**Validates: Requirements 3.5**
+
+---
+
+### Property 8: Order deletion cascades to items
+
+*For any* `SupplierOrder` that has one or more associated `SupplierOrderItem` records, deleting the order should also delete all of its items, leaving no orphaned item records in the database.
+
+**Validates: Requirements 3.6, 6.1**
+
+---
+
+### Property 9: Line total computation
+
+*For any* `SupplierOrderItem` with a given `quantity` and `unit_cost`, the computed line total should equal `quantity × unit_cost`.
 
 **Validates: Requirements 4.2**
 
 ---
 
-### Property 10: Tracking requires a non-empty value
+### Property 10: Order total computation
 
-*For any* tracking submission where the `tracking` field is empty or whitespace-only, the system should reject the request and the tracking count for the order should remain unchanged.
+*For any* `SupplierOrder` with a set of items, the computed order total should equal the sum of all individual line totals (`Σ quantity_i × unit_cost_i`).
 
 **Validates: Requirements 4.3**
 
 ---
 
-### Property 11: Trackings are returned in chronological order
+### Property 11: All routes require authentication
 
-*For any* `SupplierOrder` with multiple tracking entries, the list returned by the edit page should be sorted ascending by `created_at`.
+*For any* route belonging to `supplier-orders` or `supplier-order-statuses`, an unauthenticated HTTP request should receive a redirect to the login page rather than a successful response.
 
-**Validates: Requirements 4.4**
-
----
-
-### Property 12: Split preserves original order number and remaining items
-
-*For any* `SupplierOrder` with items [A, B, C], splitting off item [C] should leave the original order with its unchanged `order_number` and items [A, B].
-
-**Validates: Requirements 5.2**
-
----
-
-### Property 13: Split requires a new order number
-
-*For any* split request that omits `new_order_number` or provides an empty value, the system should reject the request and no new order should be created.
-
-**Validates: Requirements 5.3**
-
----
-
-### Property 14: Split copies supplier and status to new order
-
-*For any* split operation, the newly created `SupplierOrder` should have the same `supplier_id` and `status_id` as the original order.
-
-**Validates: Requirements 5.4**
-
----
-
-### Property 15: Split requires at least one item on each side
-
-*For any* split request where all items are selected to move (leaving the original empty) or no items are selected (leaving the new order empty), the system should reject the request and no new order should be created.
-
-**Validates: Requirements 5.6**
-
----
-
-### Property 16: Payment validation rejects invalid amount or missing date
-
-*For any* payment submission where `amount` ≤ 0 or `paid_at` is absent, the system should reject the request and the payment count for the order should remain unchanged.
-
-**Validates: Requirements 6.3**
-
----
-
-### Property 17: Payments are returned sorted by paid_at ascending
-
-*For any* `SupplierOrder` with multiple payments, the list returned by the edit page should be sorted ascending by `paid_at`.
-
-**Validates: Requirements 6.5**
-
----
-
-### Property 18: Payment deletion is isolated
-
-*For any* `SupplierOrder` with N payments, deleting one specific payment should result in exactly N-1 payments, with all other payments and the order itself unchanged.
-
-**Validates: Requirements 6.6**
-
----
-
-### Property 19: Inline status update persists and redirects
-
-*For any* valid `status_id` submitted to `PATCH /supplier-orders/{order}/status`, the `SupplierOrder`'s `status_id` should be updated to the submitted value and the response should redirect to the index.
-
-**Validates: Requirements 7.4**
+**Validates: Requirements 7.1, 7.2**
 
 ---
 
 ## Error Handling
 
 ### Validation Errors
-- All validation is handled by Form Requests; Laravel returns 422 with field-level errors consumed by Inertia's `useForm` on the frontend.
-- The `split` action uses a custom `SplitRequest` that validates both `items_to_move` and `new_order_number`, plus a manual check that remaining items ≥ 1.
 
-### Status Delete Protection
-- `SupplierOrderStatusController@destroy` checks `$status->supplierOrders()->exists()` before deleting; returns a 422 with an error message if in use.
+All validation is handled by Laravel Form Requests. Inertia automatically surfaces field-level errors to the Vue frontend via the `errors` prop. No custom error handling is needed beyond standard Form Request responses.
 
-### Split Transaction Safety
-- The split runs inside `DB::transaction()`; any failure rolls back both the new order creation and the item reassignment.
+Key validation rules:
 
-### Cascade Deletes
-- Enforced at the database level via `onDelete('cascade')` in migrations, not just at the Eloquent level, ensuring integrity even from raw queries.
+| Field | Rule |
+|---|---|
+| `SupplierOrderStatus.name` | required, string, max:150, unique:supplier_orders_statuses |
+| `SupplierOrder.order_number` | required, string, unique:supplier_orders |
+| `SupplierOrder.supplier_id` | required, integer, exists:suppliers,id |
+| `SupplierOrder.status_id` | nullable, integer, exists:supplier_orders_statuses,id |
+| `SupplierOrder.tracking` | nullable, string, max:1000 |
+| `SupplierOrder.ordered_at` | nullable, date |
+| `SupplierOrder.shipped_at` | nullable, date |
+| `SupplierOrder.arrived_at` | required, date |
+| `SupplierOrderItem.product_id` | required, integer, exists:products,id |
+| `SupplierOrderItem.quantity` | required, integer, min:1 |
+| `SupplierOrderItem.unit_cost` | required, decimal:0,2, min:0 |
 
-### Not Found
-- Laravel's route model binding automatically returns 404 for unknown IDs on all parameterised routes.
+### Referential Integrity
+
+- Deleting a `SupplierOrderStatus` → `SET NULL` on `supplier_orders.status_id` (handled by DB constraint).
+- Deleting a `SupplierOrder` → `CASCADE DELETE` on `supplier_order_items` (handled by DB constraint).
+- Deleting a `Supplier` → `CASCADE DELETE` on `supplier_orders` (existing constraint, already in migration).
+- Deleting a `Product` that is referenced by items → should be `RESTRICT` to prevent orphaned items. The migration for `supplier_order_items` should use `->restrictOnDelete()` on the `product_id` FK.
+
+### Null Status Display
+
+When `status_id` is `null`, the frontend should display `"—"` (em dash). The TypeScript type for `status` is `SupplierOrderStatus | null`, so the template must guard against null before accessing `status.name`.
+
+### Transaction Safety
+
+The `store` and `update` actions on `SupplierOrderController` must wrap order creation/update and item sync inside a `DB::transaction()` to ensure atomicity. If item creation fails after the order is created, the entire operation rolls back.
 
 ---
 
@@ -543,47 +481,73 @@ The index query adds a computed flag. Orders sharing an `order_number` prefix (b
 
 ### Dual Testing Approach
 
-Both unit/feature tests and property-based tests are used. Feature tests cover specific HTTP behaviors, redirects, auth, and persistence. Property tests verify universal invariants across randomized inputs.
+Both unit/feature tests and property-based tests are used. They are complementary:
 
-### PHP Testing (Pest 4.4)
+- **Feature tests (Pest)**: verify specific HTTP behaviors, redirects, auth enforcement, and persistence side effects.
+- **Property-based tests (Pest + `pestphp/pest-plugin-arch` is not PBT — use `eris/eris` or inline data providers)**: verify universal properties across many generated inputs.
 
-**Feature tests** (`tests/Feature/SupplierOrders/`) cover:
-- Each CRUD endpoint returns correct HTTP status for authenticated and unauthenticated users
-- Specific examples: creating an order with valid data persists correctly; index returns expected fields
-- Edge cases: split with all items selected is rejected; status delete when in use is rejected
-- Integration: cascade delete removes all child records
+Since the project uses Pest 4.4 and there is no PBT library currently installed, property-based tests will be implemented using **Pest's `dataset` feature with generated data** (via PHP's `fake()` / Faker) combined with loops to approximate property testing. Each "property test" runs the assertion across a range of generated inputs (minimum 100 iterations where applicable).
 
-**Property-based tests** use [Pest's `dataset` + randomized factories] or a PBT library. Since the PHP ecosystem's primary PBT option is `eris/eris`, and the project uses Pest, the recommended approach is **`giorgiopogliani/pest-plugin-faker`** combined with randomized factory loops (100 iterations minimum per property) to approximate property testing within Pest's familiar syntax.
+The recommended PBT library to add is **`giorgiosironi/eris`** (PHP property-based testing). Alternatively, Pest datasets with Faker-generated inputs provide a pragmatic approximation without adding a new dependency.
 
-Each property test is tagged with a comment referencing the design property:
+### Feature Tests (Pest)
+
+Location: `tests/Feature/SupplierOrders/` and `tests/Feature/SupplierOrderStatuses/`
+
+**SupplierOrderStatus tests:**
+- `test('guests are redirected from status routes')` — covers Property 11 (index, store, update, destroy)
+- `test('authenticated user can create a status')` — covers 1.1
+- `test('duplicate status name is rejected')` — covers Property 1
+- `test('deleting a status nullifies order status_id')` — covers Property 2
+- `test('status index returns all statuses')` — covers 1.4
+
+**SupplierOrder tests:**
+- `test('guests are redirected from order routes')` — covers Property 11
+- `test('order requires valid supplier_id')` — covers Property 3
+- `test('order rejects invalid status_id')` — covers Property 4
+- `test('order items are validated')` — covers Properties 5 and 6 (edge cases: quantity=0, unit_cost=-1, bad product_id)
+- `test('order store persists order and items in transaction')` — covers 2.1, 3.1
+- `test('order update syncs items')` — covers Property 7
+- `test('deleting order cascades to items')` — covers Property 8
+- `test('order index returns expected shape')` — covers 4.1 (example)
+- `test('order show returns items with line totals')` — covers Properties 9 and 10
+- `test('null status displays without error')` — covers 4.4 (edge case)
+- `test('delete redirects to index with success')` — covers 6.2 (example)
+
+### Property-Based Tests
+
+Each property test uses Faker to generate varied inputs and runs assertions across multiple generated cases. Tag format: `Feature: supplier-orders, Property N: <text>`.
+
 ```php
-// Feature: supplier-orders, Property 1: Order creation requires all mandatory fields
-test('rejects order creation when required fields are missing', function () {
-    // 100 iterations with randomized missing fields
+// Feature: supplier-orders, Property 9: Line total computation
+test('line total equals quantity times unit_cost', function () {
+    for ($i = 0; $i < 100; $i++) {
+        $quantity = fake()->numberBetween(1, 1000);
+        $unitCost = fake()->randomFloat(2, 0, 9999.99);
+        $lineTotal = $quantity * $unitCost;
+        expect(round($lineTotal, 2))->toBe(round($quantity * $unitCost, 2));
+    }
+});
+
+// Feature: supplier-orders, Property 10: Order total computation
+test('order total equals sum of line totals', function () {
+    for ($i = 0; $i < 100; $i++) {
+        $items = collect(range(1, fake()->numberBetween(1, 10)))->map(fn() => [
+            'quantity'  => fake()->numberBetween(1, 100),
+            'unit_cost' => fake()->randomFloat(2, 0, 999.99),
+        ]);
+        $expected = $items->sum(fn($item) => $item['quantity'] * $item['unit_cost']);
+        $actual   = $items->sum(fn($item) => $item['quantity'] * $item['unit_cost']);
+        expect(round($actual, 2))->toBe(round($expected, 2));
+    }
 });
 ```
 
-**Property test configuration:**
-- Minimum 100 iterations per property test
-- Each property test references its design document property in a comment
-- Tag format: `// Feature: supplier-orders, Property {N}: {property_text}`
-- Each correctness property is implemented by a single property-based test
+For database-backed properties (Properties 1–8, 11), Pest feature tests with `RefreshDatabase` and Faker-generated inputs cover the property across varied data.
 
-### Test File Structure
+### Test Configuration
 
-```
-tests/
-├── Feature/
-│   └── SupplierOrders/
-│       ├── SupplierOrderCrudTest.php        — Properties 1, 2, 3
-│       ├── SupplierOrderItemTest.php        — Properties 4, 5
-│       ├── SupplierOrderStatusTest.php      — Properties 6, 7, 8
-│       ├── SupplierOrderTrackingTest.php    — Properties 9, 10, 11
-│       ├── SupplierOrderSplitTest.php       — Properties 12, 13, 14, 15
-│       ├── SupplierOrderPaymentTest.php     — Properties 16, 17, 18
-│       └── SupplierOrderInlineStatusTest.php — Property 19
-```
-
-### Frontend Testing
-
-No frontend test runner is currently configured. TypeScript correctness is verified via `npm run typecheck`. UI behavior is validated manually or through future E2E tests.
+- All feature tests use `RefreshDatabase` (configured in `tests/Pest.php`).
+- DB is SQLite in-memory (`phpunit.xml`).
+- Each property test runs minimum 100 iterations.
+- Tests are tagged with comments referencing the design property number.
