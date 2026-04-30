@@ -2,7 +2,9 @@
 
 ## Overview
 
-This feature adds supplier order management to the product sourcing system. It introduces three new entities — `SupplierOrderStatus`, `SupplierOrder`, and `SupplierOrderItem` — that are fully independent from `SupplierProductOffer`. A `SupplierOrder` records a confirmed purchase from a supplier, with line items capturing the exact products, quantities, and confirmed unit costs. Statuses are user-managed labels (e.g. Draft, Confirmed, Shipped) that can be freely created and deleted without affecting order data integrity.
+This feature adds supplier order management to the product sourcing system. It introduces four new entities — `SupplierOrderStatus`, `SupplierOrder`, `SupplierOrderItem`, and `SupplierOrderItemGroup` — that are fully independent from `SupplierProductOffer`.
+
+A `SupplierOrder` records a confirmed purchase from a supplier. Line items are always added to a flat, ungrouped list first. The user can then select items from that ungrouped list and create a named `SupplierOrderItemGroup` to organize them. Once grouped, items leave the ungrouped list and appear only within their group's own item list on the order detail view. Items can be moved between groups or returned to the ungrouped list at any time. Statuses are user-managed labels (e.g. Draft, Confirmed, Shipped) that can be freely created and deleted without affecting order data integrity.
 
 The feature follows the existing Laravel/Inertia/Vue 3 patterns in the codebase: RESTful controllers, Form Requests, Eloquent models with `$fillable` + `casts()`, Inertia page components, TanStack Vue Table for listings, and Wayfinder for type-safe route helpers.
 
@@ -12,18 +14,21 @@ Status management has no dedicated pages. Instead, a "Manage Statuses" button on
 
 ## Architecture
 
-The feature is split into two independent resource groups:
+The feature is split into three independent resource groups:
 
 1. **SupplierOrderStatus** — CRUD via API routes only (no dedicated pages). The UI is a drawer component embedded in the supplier orders index page.
-2. **SupplierOrder + SupplierOrderItems** — the main order resource. Items are managed as a nested collection on the order's create/edit forms. A dedicated `show` route renders the order detail view with computed totals.
+2. **SupplierOrder + SupplierOrderItems** — the main order resource. Items are managed as a nested collection on the order's create/edit forms. A dedicated `show` route renders the order detail view with two distinct sections: the ungrouped items list and the groups section (each group with its own item list).
+3. **SupplierOrderItemGroup** — group management scoped to a specific order. Groups are created from the order detail view by selecting items. Items can be moved between groups or ungrouped from the same view.
 
-Both groups are protected by the `auth` middleware. All mutations go through Form Requests. Computed values (line total, order total) are never stored — they are calculated at query time or in the frontend.
+All groups are protected by the `auth` middleware. All mutations go through Form Requests. Computed values (line total, order total) are never stored — they are calculated at query time or in the frontend.
 
 ```mermaid
 graph TD
     Supplier -->|has many| SupplierOrder
     SupplierOrderStatus -->|optionally labels| SupplierOrder
     SupplierOrder -->|has many| SupplierOrderItem
+    SupplierOrder -->|has many| SupplierOrderItemGroup
+    SupplierOrderItemGroup -->|optionally groups| SupplierOrderItem
     Product -->|referenced by| SupplierOrderItem
 ```
 
@@ -46,9 +51,23 @@ sequenceDiagram
     Browser->>Inertia: POST /supplier-orders (with items[])
     Inertia->>Controller: store(StoreRequest)
     Controller->>Model: SupplierOrder::create() + items()->createMany()
-    Model-->>Controller: persisted order
+    Model-->>Controller: persisted order (all items ungrouped)
     Controller-->>Inertia: redirect to index + flash
     Inertia-->>Browser: redirect
+
+    Browser->>Inertia: POST /supplier-orders/{order}/item-groups (selected item IDs + group name)
+    Inertia->>Controller: store(StoreGroupRequest)
+    Controller->>Model: SupplierOrderItemGroup::create() + items()->update(['group_id' => ...])
+    Model-->>Controller: persisted group
+    Controller-->>Inertia: redirect back + flash
+    Inertia-->>Browser: updated Show page
+
+    Browser->>Inertia: PATCH /supplier-orders/{order}/items/{item} (group_id)
+    Inertia->>Controller: update(UpdateItemRequest)
+    Controller->>Model: item->update(['group_id' => ...])
+    Model-->>Controller: updated item
+    Controller-->>Inertia: redirect back + flash
+    Inertia-->>Browser: updated Show page
 ```
 
 ---
@@ -63,14 +82,22 @@ sequenceDiagram
 |---|---|---|
 | `SupplierOrderStatusController` | `/supplier-order-statuses` | `index`, `store`, `update`, `destroy` only (no pages) |
 | `SupplierOrderController` | `/supplier-orders` | Full resource including `show` |
+| `SupplierOrderItemGroupController` | `/supplier-orders/{supplierOrder}/item-groups` | Nested under order; `store`, `update`, `destroy` |
+| `SupplierOrderItemController` | `/supplier-orders/{supplierOrder}/items` | Nested under order; `store`, `update`, `destroy` for individual item management including group assignment |
 
-`SupplierOrderController::index()` returns a paginated, sortable collection with eager-loaded `supplier`, `status`, and item count. It also passes all `SupplierOrderStatus` records as a prop so the drawer can render them without a separate request. The list shows: order number, supplier name, status, tracking, ordered/shipped/arrived dates, item count, and creation date.
+`SupplierOrderController::index()` returns a paginated, sortable collection with eager-loaded `supplier`, `status`, and item count. It also passes all `SupplierOrderStatus` records as a prop so the drawer can render them without a separate request.
 
-`SupplierOrderController::show()` returns the order with all items eager-loaded (including `product`), plus computed line totals and order total passed as props.
+`SupplierOrderController::show()` returns the order with all items eager-loaded (including `product` and `group`), all groups for the order (each with their items), plus computed line totals and order total passed as props. The frontend renders two separate sections: ungrouped items (where `group_id` is null) and groups (each rendered with their own item list).
 
-`SupplierOrderController::store()` and `update()` accept a nested `items[]` array and sync items inside a database transaction.
+`SupplierOrderController::store()` and `update()` accept a nested `items[]` array and sync items inside a database transaction. All items are created without a `group_id` (ungrouped).
 
-`SupplierOrderStatusController` handles JSON-style responses for `store`, `update`, and `destroy` — these are called via Inertia from the drawer and redirect back to the orders index with a flash message.
+`SupplierOrderItemGroupController::store()` accepts a `name` and an array of `item_ids` (all must belong to the same order). It creates the group and assigns the selected items to it in a transaction.
+
+`SupplierOrderItemGroupController::update()` accepts a `name` to rename the group.
+
+`SupplierOrderItemGroupController::destroy()` deletes the group and sets `group_id = null` on all its items (ungrouping them).
+
+`SupplierOrderItemController::update()` accepts a `group_id` (nullable) to move an item to a different group or back to ungrouped.
 
 #### Form Requests
 
@@ -82,6 +109,13 @@ app/Http/Requests/SupplierOrders/
 app/Http/Requests/SupplierOrderStatuses/
     StoreRequest.php
     UpdateRequest.php
+
+app/Http/Requests/SupplierOrderItemGroups/
+    StoreRequest.php
+    UpdateRequest.php
+
+app/Http/Requests/SupplierOrderItems/
+    UpdateRequest.php   (for group assignment only)
 ```
 
 #### Routes (`routes/web.php` additions)
@@ -93,6 +127,15 @@ Route::middleware(['auth'])->group(function () {
         ->only(['index', 'store', 'update', 'destroy']);
 
     Route::resource('supplier-orders', SupplierOrderController::class);
+
+    // Nested routes scoped to a specific order
+    Route::resource('supplier-orders.item-groups', SupplierOrderItemGroupController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->scoped();
+
+    Route::resource('supplier-orders.items', SupplierOrderItemController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->scoped();
 });
 ```
 
@@ -105,25 +148,26 @@ resources/js/pages/supplier-orders/
     Index.vue    — order list + "Manage Statuses" button + StatusDrawer
     Create.vue
     Edit.vue
-    Show.vue
+    Show.vue     — unified item list with group labels + group management panel
 ```
 
-No pages are created for `supplier-order-statuses`. Status management is handled entirely within the drawer component.
+No pages are created for `supplier-order-statuses` or `supplier-order-item-groups`. Status management is handled entirely within the drawer component. Group management is handled inline on the `Show.vue` page.
 
 #### Components
 
 ```
 resources/js/pages/supplier-orders/
-    StatusDrawer.vue   — drawer with status list, create form, and inline edit form
+    StatusDrawer.vue        — drawer with status list, create form, and inline edit form
+
+resources/js/features/supplier-orders/components/
+    SupplierOrderDataTableDropdown.vue   — row actions for the orders index table
+    ItemGroupPanel.vue                   — panel on Show.vue listing groups, with rename/delete actions
+    ItemGroupAssignDropdown.vue          — dropdown on each item row to move it to a group or ungroup it
 ```
 
-The `StatusDrawer` component:
-- Is opened by a "Manage Statuses" button in the `Index.vue` header
-- Lists all statuses passed as a prop from the index controller
-- Has an inline form to create a new status (name + description)
-- Each status row has an edit button that switches that row into an inline edit form within the same drawer
-- Submits create/update/delete via Inertia form posts to the `supplier-order-statuses` routes
-- On success, Inertia reloads the page props (statuses list refreshes) and the drawer stays open
+The `Show.vue` page renders two distinct sections:
+1. **Ungrouped items list** — a table of items where `group_id` is null. Rows have checkboxes for selection. When ≥ 1 item is selected, a "Create Group" button appears to group the selection.
+2. **Groups section** — one collapsible block per group, each containing its own item table. Each group block has a header with the group name, rename and delete actions, and an `ItemGroupAssignDropdown` per item row to move items to another group or back to ungrouped.
 
 #### Feature Types
 
@@ -132,7 +176,7 @@ resources/js/features/supplier-order-statuses/types/
     supplierOrderStatuses.ts   — SupplierOrderStatus interface
 
 resources/js/features/supplier-orders/types/
-    supplierOrders.ts          — SupplierOrder, SupplierOrderItem interfaces
+    supplierOrders.ts          — SupplierOrder, SupplierOrderItem, SupplierOrderItemGroup interfaces
     columns.ts                 — TanStack column definitions for index
 ```
 
@@ -145,8 +189,8 @@ After adding routes, run `composer run wayfinder:generate` to regenerate:
 - `resources/js/routes/supplier-orders.ts`
 - `resources/js/actions/App/Http/Controllers/SupplierOrderStatusController.ts`
 - `resources/js/actions/App/Http/Controllers/SupplierOrderController.ts`
-
-Note: `supplier-order-statuses` Wayfinder helpers are used inside `StatusDrawer.vue` for form action URLs.
+- `resources/js/actions/App/Http/Controllers/SupplierOrderItemGroupController.ts`
+- `resources/js/actions/App/Http/Controllers/SupplierOrderItemController.ts`
 
 ---
 
@@ -167,7 +211,7 @@ created_at / updated_at
 id                  bigint unsigned PK
 order_number        varchar UNIQUE NOT NULL
 supplier_id         FK → suppliers.id  CASCADE DELETE
-status_id           FK → supplier_orders_statuses.id  SET NULL on delete  (nullable)
+status_id           FK → supplier_order_statuses.id  SET NULL on delete  (nullable)
 tracking            varchar(1000) NULL
 ordered_at          date NULL
 shipped_at          date NULL
@@ -175,19 +219,28 @@ arrived_at          date NOT NULL
 created_at / updated_at
 ```
 
-> Note: the statuses table is named `supplier_orders_statuses` (with an extra `s` before `_statuses`). This is the actual table name used in the migration and must be used consistently across models, routes, and controllers.
+### New Migrations Required
 
-### New Migration Required
-
-**`supplier_order_items`** (to be created):
+**`supplier_order_item_groups`** (to be created):
 ```
 id                  bigint unsigned PK
 supplier_order_id   FK → supplier_orders.id  CASCADE DELETE
+name                varchar(150) NOT NULL
+created_at / updated_at
+```
+
+**`supplier_order_items`** (to be created / corrected):
+```
+id                  bigint unsigned PK
+supplier_order_id   FK → supplier_orders.id  CASCADE DELETE
+group_id            FK → supplier_order_item_groups.id  SET NULL on delete  (nullable)
 product_id          FK → products.id  RESTRICT (no delete if referenced)
 quantity            unsignedInteger NOT NULL  (≥ 1)
 unit_cost           decimal(10,2) NOT NULL    (≥ 0)
 created_at / updated_at
 ```
+
+> Note: `group_id` is nullable. A null `group_id` means the item is ungrouped. The `supplier_order_item_groups` migration must run before `supplier_order_items` so the FK can be established.
 
 ### Eloquent Models
 
@@ -202,8 +255,6 @@ public function orders(): HasMany
     return $this->hasMany(SupplierOrder::class, 'status_id');
 }
 ```
-
-No `casts()` needed beyond defaults.
 
 #### `SupplierOrder`
 
@@ -222,19 +273,29 @@ protected function casts(): array
     ];
 }
 
-public function supplier(): BelongsTo
+public function supplier(): BelongsTo { ... }
+public function status(): BelongsTo { ... }
+public function items(): HasMany { ... }
+public function groups(): HasMany
 {
-    return $this->belongsTo(Supplier::class);
+    return $this->hasMany(SupplierOrderItemGroup::class);
 }
+```
 
-public function status(): BelongsTo
+#### `SupplierOrderItemGroup`
+
+```php
+// app/Models/SupplierOrderItemGroup.php
+protected $fillable = ['supplier_order_id', 'name'];
+
+public function order(): BelongsTo
 {
-    return $this->belongsTo(SupplierOrderStatus::class, 'status_id');
+    return $this->belongsTo(SupplierOrder::class, 'supplier_order_id');
 }
 
 public function items(): HasMany
 {
-    return $this->hasMany(SupplierOrderItem::class);
+    return $this->hasMany(SupplierOrderItem::class, 'group_id');
 }
 ```
 
@@ -242,24 +303,22 @@ public function items(): HasMany
 
 ```php
 // app/Models/SupplierOrderItem.php
-protected $fillable = ['supplier_order_id', 'product_id', 'quantity', 'unit_cost'];
+protected $fillable = ['supplier_order_id', 'product_id', 'group_id', 'quantity', 'unit_cost'];
 
 protected function casts(): array
 {
     return [
         'quantity'  => 'integer',
         'unit_cost' => 'decimal:2',
+        'group_id'  => 'integer',
     ];
 }
 
-public function order(): BelongsTo
+public function order(): BelongsTo { ... }
+public function product(): BelongsTo { ... }
+public function group(): BelongsTo
 {
-    return $this->belongsTo(SupplierOrder::class, 'supplier_order_id');
-}
-
-public function product(): BelongsTo
-{
-    return $this->belongsTo(Product::class);
+    return $this->belongsTo(SupplierOrderItemGroup::class, 'group_id');
 }
 ```
 
@@ -267,10 +326,10 @@ public function product(): BelongsTo
 
 Line total and order total are **never stored**. They are computed:
 
-- **Line total**: `quantity × unit_cost` — computed in the frontend from item props, or via a model accessor for convenience in tests.
+- **Line total**: `quantity × unit_cost` — computed in the frontend from item props.
 - **Order total**: sum of all line totals — computed in the frontend by reducing the items array.
 
-For the `show` controller action, the backend can pass pre-computed totals as props to avoid floating-point logic duplication in the frontend:
+For the `show` controller action, the backend passes pre-computed totals as props:
 
 ```php
 'order_total' => $order->items->sum(fn($item) => $item->quantity * $item->unit_cost),
@@ -292,13 +351,23 @@ export interface SupplierOrderStatus {
 import type { Supplier } from '@/types';
 import type { SupplierOrderStatus } from '@/features/supplier-order-statuses/types/supplierOrderStatuses';
 
+export interface SupplierOrderItemGroup {
+    id: number;
+    supplier_order_id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface SupplierOrderItem {
     id: number;
     supplier_order_id: number;
     product_id: number;
+    group_id: number | null;
     quantity: number;
     unit_cost: number | string;
     product?: { id: number; name: string; sku: string | null } | null;
+    group?: SupplierOrderItemGroup | null;
 }
 
 export interface SupplierOrder {
@@ -315,6 +384,7 @@ export interface SupplierOrder {
     supplier?: Supplier | null;
     status?: SupplierOrderStatus | null;
     items?: SupplierOrderItem[];
+    groups?: SupplierOrderItemGroup[];
     items_count?: number;
 }
 ```
@@ -341,14 +411,19 @@ New keys to add to both `lang/en.json` and `lang/es.json`:
 | `supplier_orders.fields.quantity` | `Quantity` | `Cantidad` |
 | `supplier_orders.fields.line_total` | `Line Total` | `Total de Línea` |
 | `supplier_orders.fields.order_total` | `Order Total` | `Total de Orden` |
+| `supplier_orders.fields.group` | `Group` | `Grupo` |
 | `supplier_orders.no_status` | `—` | `—` |
-
+| `supplier_orders.no_group` | `—` | `—` |
+| `supplier_orders.item_groups.title` | `Item Groups` | `Grupos de Artículos` |
+| `supplier_orders.item_groups.create` | `Create Group` | `Crear Grupo` |
+| `supplier_orders.item_groups.name` | `Group Name` | `Nombre del Grupo` |
+| `supplier_orders.item_groups.ungroup` | `Ungroup` | `Desagrupar` |
 
 ---
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do.*
 
 ### Property 1: Status name uniqueness
 
@@ -398,43 +473,75 @@ New keys to add to both `lang/en.json` and `lang/es.json`:
 
 ---
 
-### Property 7: Order update syncs item collection
+### Property 7: New items are always ungrouped
 
-*For any* existing `SupplierOrder` and any new set of valid items submitted via an update request, the order's item collection after the update should exactly match the submitted items (no stale items remain, all new items are present).
+*For any* `SupplierOrderItem` created via the store action, the resulting record should have `group_id = null` regardless of any other payload values.
+
+**Validates: Requirements 3.7**
+
+---
+
+### Property 8: Order update syncs item collection
+
+*For any* existing `SupplierOrder` and any new set of valid items submitted via an update request, the order's item collection after the update should exactly match the submitted items (no stale items remain, all new items are present, all new items are ungrouped).
 
 **Validates: Requirements 3.5**
 
 ---
 
-### Property 8: Order deletion cascades to items
+### Property 9: Group creation assigns items and removes them from ungrouped list
 
-*For any* `SupplierOrder` that has one or more associated `SupplierOrderItem` records, deleting the order should also delete all of its items, leaving no orphaned item records in the database.
+*For any* group creation request with a valid `name` and a non-empty list of `item_ids` belonging to the same order, all specified items should have their `group_id` set to the new group's id after the operation, and none of those items should appear in the ungrouped items list.
 
-**Validates: Requirements 3.6, 6.1**
+**Validates: Requirements 4.1, 4.2, 4.3**
 
 ---
 
-### Property 9: Line total computation
+### Property 10: Group deletion ungroups items and returns them to ungrouped list
+
+*For any* `SupplierOrderItemGroup` that has one or more items, deleting the group should leave all previously-grouped items intact with their `group_id` set to `null`, returning them to the ungrouped items list. No items should be deleted.
+
+**Validates: Requirements 4.7**
+
+---
+
+### Property 11: Item group assignment is mutable
+
+*For any* `SupplierOrderItem`, updating its `group_id` to a valid group id (belonging to the same order) should move it from its current list (ungrouped or source group) to the destination group's list. Setting `group_id` to `null` should return it to the ungrouped list.
+
+**Validates: Requirements 4.5, 4.6**
+
+---
+
+### Property 12: Order deletion cascades to items and groups
+
+*For any* `SupplierOrder` that has associated `SupplierOrderItem` and `SupplierOrderItemGroup` records, deleting the order should also delete all of its items and groups, leaving no orphaned records in the database.
+
+**Validates: Requirements 3.6, 7.1**
+
+---
+
+### Property 13: Line total computation
 
 *For any* `SupplierOrderItem` with a given `quantity` and `unit_cost`, the computed line total should equal `quantity × unit_cost`.
 
-**Validates: Requirements 4.2**
+**Validates: Requirements 5.2**
 
 ---
 
-### Property 10: Order total computation
+### Property 14: Order total computation
 
 *For any* `SupplierOrder` with a set of items, the computed order total should equal the sum of all individual line totals (`Σ quantity_i × unit_cost_i`).
 
-**Validates: Requirements 4.3**
+**Validates: Requirements 5.3**
 
 ---
 
-### Property 11: All routes require authentication
+### Property 15: All routes require authentication
 
-*For any* route belonging to `supplier-orders` or `supplier-order-statuses`, an unauthenticated HTTP request should receive a redirect to the login page rather than a successful response.
+*For any* route belonging to `supplier-orders`, `supplier-order-statuses`, or the nested item/group routes, an unauthenticated HTTP request should receive a redirect to the login page rather than a successful response.
 
-**Validates: Requirements 7.1, 7.2**
+**Validates: Requirements 8.1, 8.2**
 
 ---
 
@@ -442,16 +549,16 @@ New keys to add to both `lang/en.json` and `lang/es.json`:
 
 ### Validation Errors
 
-All validation is handled by Laravel Form Requests. Inertia automatically surfaces field-level errors to the Vue frontend via the `errors` prop. No custom error handling is needed beyond standard Form Request responses.
+All validation is handled by Laravel Form Requests. Inertia automatically surfaces field-level errors to the Vue frontend via the `errors` prop.
 
 Key validation rules:
 
 | Field | Rule |
 |---|---|
-| `SupplierOrderStatus.name` | required, string, max:150, unique:supplier_orders_statuses |
+| `SupplierOrderStatus.name` | required, string, max:150, unique:supplier_order_statuses |
 | `SupplierOrder.order_number` | required, string, unique:supplier_orders |
 | `SupplierOrder.supplier_id` | required, integer, exists:suppliers,id |
-| `SupplierOrder.status_id` | nullable, integer, exists:supplier_orders_statuses,id |
+| `SupplierOrder.status_id` | nullable, integer, exists:supplier_order_statuses,id |
 | `SupplierOrder.tracking` | nullable, string, max:1000 |
 | `SupplierOrder.ordered_at` | nullable, date |
 | `SupplierOrder.shipped_at` | nullable, date |
@@ -459,21 +566,29 @@ Key validation rules:
 | `SupplierOrderItem.product_id` | required, integer, exists:products,id |
 | `SupplierOrderItem.quantity` | required, integer, min:1 |
 | `SupplierOrderItem.unit_cost` | required, decimal:0,2, min:0 |
+| `SupplierOrderItemGroup.name` | required, string, max:150 |
+| `SupplierOrderItemGroup.item_ids` | required, array, min:1; each item must exist and belong to the same order |
+| `SupplierOrderItem.group_id` (update) | nullable, integer, exists:supplier_order_item_groups,id; group must belong to the same order |
 
 ### Referential Integrity
 
-- Deleting a `SupplierOrderStatus` → `SET NULL` on `supplier_orders.status_id` (handled by DB constraint).
-- Deleting a `SupplierOrder` → `CASCADE DELETE` on `supplier_order_items` (handled by DB constraint).
-- Deleting a `Supplier` → `CASCADE DELETE` on `supplier_orders` (existing constraint, already in migration).
-- Deleting a `Product` that is referenced by items → should be `RESTRICT` to prevent orphaned items. The migration for `supplier_order_items` should use `->restrictOnDelete()` on the `product_id` FK.
+- Deleting a `SupplierOrderStatus` → `SET NULL` on `supplier_orders.status_id` (DB constraint).
+- Deleting a `SupplierOrder` → `CASCADE DELETE` on `supplier_order_items` and `supplier_order_item_groups` (DB constraint).
+- Deleting a `SupplierOrderItemGroup` → `SET NULL` on `supplier_order_items.group_id` (DB constraint).
+- Deleting a `Supplier` → `CASCADE DELETE` on `supplier_orders` (existing constraint).
+- Deleting a `Product` that is referenced by items → `RESTRICT` to prevent orphaned items.
 
-### Null Status Display
+### Null Status / Group Display
 
-When `status_id` is `null`, the frontend should display `"—"` (em dash). The TypeScript type for `status` is `SupplierOrderStatus | null`, so the template must guard against null before accessing `status.name`.
+- When `status_id` is `null`, the frontend displays `"—"`.
+- When `group_id` is `null`, the frontend displays `"—"` in the group column.
+- TypeScript types for both `status` and `group` are nullable, so templates must guard against null before accessing their properties.
 
 ### Transaction Safety
 
-The `store` and `update` actions on `SupplierOrderController` must wrap order creation/update and item sync inside a `DB::transaction()` to ensure atomicity. If item creation fails after the order is created, the entire operation rolls back.
+- `SupplierOrderController::store()` and `update()` wrap order + item operations in `DB::transaction()`.
+- `SupplierOrderItemGroupController::store()` wraps group creation + item assignment in `DB::transaction()`.
+- `SupplierOrderItemGroupController::destroy()` wraps group deletion + item ungrouping in `DB::transaction()`.
 
 ---
 
@@ -484,52 +599,64 @@ The `store` and `update` actions on `SupplierOrderController` must wrap order cr
 Both unit/feature tests and property-based tests are used. They are complementary:
 
 - **Feature tests (Pest)**: verify specific HTTP behaviors, redirects, auth enforcement, and persistence side effects.
-- **Property-based tests (Pest + `pestphp/pest-plugin-arch` is not PBT — use `eris/eris` or inline data providers)**: verify universal properties across many generated inputs.
-
-Since the project uses Pest 4.4 and there is no PBT library currently installed, property-based tests will be implemented using **Pest's `dataset` feature with generated data** (via PHP's `fake()` / Faker) combined with loops to approximate property testing. Each "property test" runs the assertion across a range of generated inputs (minimum 100 iterations where applicable).
-
-The recommended PBT library to add is **`giorgiosironi/eris`** (PHP property-based testing). Alternatively, Pest datasets with Faker-generated inputs provide a pragmatic approximation without adding a new dependency.
+- **Property-based tests**: implemented using Pest's `dataset` feature with Faker-generated data and loops to approximate property testing across many inputs.
 
 ### Feature Tests (Pest)
 
 Location: `tests/Feature/SupplierOrders/` and `tests/Feature/SupplierOrderStatuses/`
 
 **SupplierOrderStatus tests:**
-- `test('guests are redirected from status routes')` — covers Property 11 (index, store, update, destroy)
+- `test('guests are redirected from status routes')` — covers Property 15
 - `test('authenticated user can create a status')` — covers 1.1
 - `test('duplicate status name is rejected')` — covers Property 1
 - `test('deleting a status nullifies order status_id')` — covers Property 2
 - `test('status index returns all statuses')` — covers 1.4
 
 **SupplierOrder tests:**
-- `test('guests are redirected from order routes')` — covers Property 11
+- `test('guests are redirected from order routes')` — covers Property 15
 - `test('order requires valid supplier_id')` — covers Property 3
 - `test('order rejects invalid status_id')` — covers Property 4
-- `test('order items are validated')` — covers Properties 5 and 6 (edge cases: quantity=0, unit_cost=-1, bad product_id)
-- `test('order store persists order and items in transaction')` — covers 2.1, 3.1
-- `test('order update syncs items')` — covers Property 7
-- `test('deleting order cascades to items')` — covers Property 8
-- `test('order index returns expected shape')` — covers 4.1 (example)
-- `test('order show returns items with line totals')` — covers Properties 9 and 10
-- `test('null status displays without error')` — covers 4.4 (edge case)
-- `test('delete redirects to index with success')` — covers 6.2 (example)
+- `test('order items are validated')` — covers Properties 5 and 6
+- `test('order store persists order and items ungrouped')` — covers 2.1, 3.1, Property 7
+- `test('order update syncs items and ungroups them')` — covers Property 8
+- `test('deleting order cascades to items and groups')` — covers Property 12
+- `test('order index returns expected shape')` — covers 5.1
+- `test('order show returns unified item list with group info')` — covers 5.2, Properties 13 and 14
+- `test('null status displays without error')` — covers 5.4
+- `test('delete redirects to index with success')` — covers 7.2
+
+**SupplierOrderItemGroup tests:**
+- `test('guests are redirected from item group routes')` — covers Property 15
+- `test('creating a group assigns selected items')` — covers Property 9
+- `test('creating a group requires at least one item')` — covers 4.3
+- `test('creating a group requires a name')` — covers 4.8
+- `test('deleting a group ungroups its items')` — covers Property 10
+- `test('renaming a group persists the new name')` — covers 4.7
+- `test('moving an item to another group updates group_id')` — covers Property 11
+- `test('ungrouping an item sets group_id to null')` — covers Property 11
 
 ### Property-Based Tests
 
-Each property test uses Faker to generate varied inputs and runs assertions across multiple generated cases. Tag format: `Feature: supplier-orders, Property N: <text>`.
+Each property test uses Faker to generate varied inputs and runs assertions across multiple generated cases.
 
 ```php
-// Feature: supplier-orders, Property 9: Line total computation
+// Property 7: New items are always ungrouped
+test('new items always have null group_id', function () {
+    for ($i = 0; $i < 50; $i++) {
+        // create order + item via store, assert group_id is null
+    }
+});
+
+// Property 13: Line total computation
 test('line total equals quantity times unit_cost', function () {
     for ($i = 0; $i < 100; $i++) {
         $quantity = fake()->numberBetween(1, 1000);
         $unitCost = fake()->randomFloat(2, 0, 9999.99);
-        $lineTotal = $quantity * $unitCost;
-        expect(round($lineTotal, 2))->toBe(round($quantity * $unitCost, 2));
+        expect(round($quantity * $unitCost, 2))->toBe(round($quantity * $unitCost, 2));
     }
 });
 
-// Feature: supplier-orders, Property 10: Order total computation
+// Property 14: Order total computation
 test('order total equals sum of line totals', function () {
     for ($i = 0; $i < 100; $i++) {
         $items = collect(range(1, fake()->numberBetween(1, 10)))->map(fn() => [
@@ -543,11 +670,9 @@ test('order total equals sum of line totals', function () {
 });
 ```
 
-For database-backed properties (Properties 1–8, 11), Pest feature tests with `RefreshDatabase` and Faker-generated inputs cover the property across varied data.
-
 ### Test Configuration
 
 - All feature tests use `RefreshDatabase` (configured in `tests/Pest.php`).
 - DB is SQLite in-memory (`phpunit.xml`).
-- Each property test runs minimum 100 iterations.
+- Each property test runs minimum 50–100 iterations.
 - Tests are tagged with comments referencing the design property number.
